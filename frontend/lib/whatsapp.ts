@@ -8,6 +8,39 @@ function formatoMoneda(valor: number) {
   });
 }
 
+/**
+ * Detecta un emoji de comida acorde al nombre del producto/variante.
+ * El orden importa: las palabras más específicas van primero para que,
+ * por ejemplo, "Arroz Chino + Camarón y Palmitos" tome 🍤 y no 🍚.
+ */
+const EMOJIS_POR_PALABRA_CLAVE: [RegExp, string][] = [
+  [/camar[oó]n|frutos del mar|palmitos|calamar|pulpo|conchit/i, "🍤"],
+  [/wonton|lumpia|rollito/i, "🥟"],
+  [/aros? de cebolla/i, "🧅"],
+  [/chow ?mein|fideos|pasta/i, "🍜"],
+  [/chow ?suey|mazorcada|salteado/i, "🥘"],
+  [/crema de pollo|crema de champi|sopa/i, "🍲"],
+  [/hamburguesa/i, "🍔"],
+  [/perro caliente|combo perro/i, "🌭"],
+  [/salchipapa|papa francesa|papas? a la francesa/i, "🍟"],
+  [/alitas?/i, "🍗"],
+  [/pollo|pechuga/i, "🍗"],
+  [/costilla|lomo|cerdo|chuleta|churrasco|carnes? ahumada/i, "🥩"],
+  [/huevos? de codorniz/i, "🥚"],
+  [/arroz/i, "🍚"],
+  [/gaseosa|jugo|hit|postob[oó]n|colombiana/i, "🥤"],
+  [/cerveza|poker|pola|cola y pola/i, "🍺"],
+  [/agua/i, "💧"],
+  [/palillos/i, "🥢"],
+];
+
+export function emojiParaProducto(nombre: string): string {
+  for (const [patron, emoji] of EMOJIS_POR_PALABRA_CLAVE) {
+    if (patron.test(nombre)) return emoji;
+  }
+  return "🍽️";
+}
+
 /** Construye el texto del pedido exactamente en el formato solicitado. */
 export function construirMensajePedido(
   cliente: DatosCliente,
@@ -20,20 +53,20 @@ export function construirMensajePedido(
   });
 
   const lineasPedido = items
-    .map((i) => `• ${i.cantidad} ${i.nombre}`)
+    .map((i) => `• ${emojiParaProducto(i.nombre)} ${i.cantidad} ${i.nombre}`)
     .join("\n");
 
-  let mensaje = `Nuevo Pedido\n\n`;
+  let mensaje = `🧾 Nuevo Pedido\n\n`;
   mensaje += `Mesa: ${cliente.mesa}\n`;
   mensaje += `Cliente: ${cliente.nombre}\n\n`;
   mensaje += `Pedido:\n${lineasPedido}\n\n`;
 
   if (cliente.observaciones?.trim()) {
-    mensaje += `Observaciones:\n${cliente.observaciones.trim()}\n\n`;
+    mensaje += `📝 Observaciones:\n${cliente.observaciones.trim()}\n\n`;
   }
 
-  mensaje += `Total:\n${formatoMoneda(total)}\n\n`;
-  mensaje += `Hora:\n${hora}`;
+  mensaje += `💰 Total:\n${formatoMoneda(total)}\n\n`;
+  mensaje += `🕒 Hora:\n${hora}`;
 
   return mensaje;
 }
