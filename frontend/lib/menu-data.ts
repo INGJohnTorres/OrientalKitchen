@@ -333,7 +333,7 @@ export const productos: Producto[] = [
   {
     id: "esp-chowsuey-sencillo",
     categoriaId: "especiales",
-    nombre: "Chow Suey Sencillo",
+    nombre: "Chop Suey Sencillo",
     descripcion: "Verduras orientales + pollo desmenuzado + carne picada + papas x60 gr. Opcional con arroz.",
     precio: 22000,
     imagen: img("chop-suey.jpg"),
@@ -346,7 +346,7 @@ export const productos: Producto[] = [
   {
     id: "esp-chowsuey-duo",
     categoriaId: "especiales",
-    nombre: "Chow Suey Duo",
+    nombre: "Chop Suey Duo",
     descripcion: "Verduras orientales + pollo desmenuzado + carne picada + papas x120 gr. Opcional con arroz.",
     precio: 29000,
     imagen: img("chop-suey.jpg"),
@@ -430,7 +430,6 @@ export const productos: Producto[] = [
     descripcion: "Delicada y cremosa, acompañada de crujientes papas fosforito para el contraste perfecto.",
     precio: 7500,
     imagen: img("crema-pollo-champinon.jpg"),
-    etiquetas: ["Vegetariano"],
     activo: true,
   },
 
