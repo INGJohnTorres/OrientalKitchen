@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-cream text-espresso dark:bg-espresso dark:text-cream font-body transition-colors duration-300;
+}
+
+/* Signature element: the "kitchen ticket" look used for the cart, checkout
+   and confirmation screens — a nod to a real order slip in a restaurant. */
+.ticket {
+  position: relative;
+  background: repeating-linear-gradient(
+    to bottom,
+    theme("colors.cream"),
+    theme("colors.cream") 100%
+  );
+  box-shadow: 0 8px 30px -12px rgba(36, 23, 18, 0.35);
+}
+
+.dark .ticket {
+  background: theme("colors.cocoa");
+}
+
+.ticket::before,
+.ticket::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: radial-gradient(circle, transparent 60%, currentColor 61%) 0 0 / 16px 16px repeat-x;
+  color: theme("colors.cream");
+}
+
+.dark .ticket::before,
+.dark .ticket::after {
+  color: theme("colors.espresso");
+}
+
+.ticket::before {
+  top: -7px;
+}
+
+.ticket::after {
+  bottom: -7px;
+  transform: rotate(180deg);
+}
+
+.grain-bg {
+  background-image: theme("backgroundImage.grain");
+  background-size: 18px 18px;
+}
+
+::selection {
+  background: theme("colors.mustard");
+  color: theme("colors.espresso");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
