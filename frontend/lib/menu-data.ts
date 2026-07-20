@@ -339,7 +339,7 @@ export const productos: Producto[] = [
     imagen: img("chop-suey.jpg"),
     activo: true,
     variantes: [
-      { id: "solo", nombre: "Chow Suey Sencillo", precio: 22000 },
+      { id: "solo", nombre: "Chop Suey Sencillo", precio: 22000 },
       { id: "camaron", nombre: "+ Adición de Camarón", precio: 28000 },
     ],
   },
@@ -352,7 +352,7 @@ export const productos: Producto[] = [
     imagen: img("chop-suey.jpg"),
     activo: true,
     variantes: [
-      { id: "solo", nombre: "Chow Suey Duo", precio: 29000 },
+      { id: "solo", nombre: "Chop Suey Duo", precio: 29000 },
       { id: "camaron", nombre: "+ Adición de Camarón", precio: 33000 },
     ],
   },
