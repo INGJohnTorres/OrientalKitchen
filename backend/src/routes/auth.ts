@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
+import { asyncHandler } from "../lib/async-handler";
 
 const router = Router();
 
@@ -11,7 +12,7 @@ const loginSchema = z.object({
   clave: z.string().min(1),
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", asyncHandler(async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Usuario y clave son requeridos." });
@@ -31,6 +32,6 @@ router.post("/login", async (req, res) => {
   );
 
   res.json({ token, usuario: { id: cuenta.id, usuario: cuenta.usuario, rol: cuenta.rol } });
-});
+}));
 
 export default router;

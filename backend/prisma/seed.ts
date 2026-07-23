@@ -1,72 +1,72 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import catalogo from "./seed-data.json";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const entradas = await prisma.categoria.create({ data: { nombre: "Entradas", orden: 1 } });
-  const hamburguesas = await prisma.categoria.create({ data: { nombre: "Hamburguesas", orden: 2 } });
-  const pizzas = await prisma.categoria.create({ data: { nombre: "Pizzas", orden: 3 } });
-  const bebidas = await prisma.categoria.create({ data: { nombre: "Bebidas", orden: 4 } });
-  const postres = await prisma.categoria.create({ data: { nombre: "Postres", orden: 5 } });
+  console.log(`Sembrando ${catalogo.categorias.length} categorías y ${catalogo.productos.length} productos...`);
 
-  await prisma.producto.createMany({
-    data: [
-      {
-        nombre: "Alitas BBQ",
-        descripcion: "8 alitas bañadas en salsa BBQ ahumada.",
-        precio: 24000,
-        imagen: "https://images.unsplash.com/photo-1608039755401-742074f0548d?w=600&q=80",
-        categoriaId: entradas.id,
-        etiquetas: ["Picante"],
+  // Se usan los mismos IDs de slug que en el frontend (lib/menu-data.ts), en
+  // vez de dejar que Prisma genere cuids nuevos, para que ambos lados
+  // (código estático y base de datos) hablen de los mismos productos.
+  for (const cat of catalogo.categorias) {
+    await prisma.categoria.upsert({
+      where: { id: cat.id },
+      update: { nombre: cat.nombre, orden: cat.orden, estiloLista: cat.estiloLista ?? false },
+      create: { id: cat.id, nombre: cat.nombre, orden: cat.orden, estiloLista: cat.estiloLista ?? false },
+    });
+  }
+
+  for (const prod of catalogo.productos) {
+    await prisma.producto.upsert({
+      where: { id: prod.id },
+      update: {
+        nombre: prod.nombre,
+        descripcion: prod.descripcion ?? "",
+        precio: prod.precio,
+        imagen: prod.imagen ?? null,
+        activo: prod.activo ?? true,
+        destacado: prod.destacado ?? false,
+        masVendido: prod.masVendido ?? false,
+        etiquetas: prod.etiquetas ?? [],
+        variantes: prod.variantes ?? undefined,
+        categoriaId: prod.categoriaId,
       },
-      {
-        nombre: "Clásica",
-        descripcion: "Carne 150g, queso cheddar, lechuga, tomate y salsa especial.",
-        precio: 26000,
-        imagen: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80",
-        categoriaId: hamburguesas.id,
-        masVendido: true,
+      create: {
+        id: prod.id,
+        nombre: prod.nombre,
+        descripcion: prod.descripcion ?? "",
+        precio: prod.precio,
+        imagen: prod.imagen ?? null,
+        activo: prod.activo ?? true,
+        destacado: prod.destacado ?? false,
+        masVendido: prod.masVendido ?? false,
+        etiquetas: prod.etiquetas ?? [],
+        variantes: prod.variantes ?? undefined,
+        categoriaId: prod.categoriaId,
       },
-      {
-        nombre: "Margarita",
-        descripcion: "Salsa de tomate, mozzarella fresca y albahaca.",
-        precio: 34000,
-        imagen: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600&q=80",
-        categoriaId: pizzas.id,
-        etiquetas: ["Vegetariano"],
-      },
-      {
-        nombre: "Coca-Cola 400ml",
-        descripcion: "Bien fría.",
-        precio: 6000,
-        imagen: "https://images.unsplash.com/photo-1554866585-cd94860890b7?w=600&q=80",
-        categoriaId: bebidas.id,
-      },
-      {
-        nombre: "Volcán de chocolate",
-        descripcion: "Con centro líquido y helado de vainilla.",
-        precio: 15000,
-        imagen: "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=600&q=80",
-        categoriaId: postres.id,
-        destacado: true,
-      },
-    ],
-  });
+    });
+  }
 
   const claveHash = await bcrypt.hash("admin123", 10);
-  await prisma.usuario.create({
-    data: { usuario: "admin", claveHash, rol: "admin" },
+  await prisma.usuario.upsert({
+    where: { usuario: "admin" },
+    update: {},
+    create: { usuario: "admin", claveHash, rol: "admin" },
   });
 
-  await prisma.configuracion.create({
-    data: {
+  await prisma.configuracion.upsert({
+    where: { id: "config-principal" },
+    update: {},
+    create: {
+      id: "config-principal",
       nombreRestaurante: "Oriental Kitchen",
       numeroWhatsapp: "573115243043",
     },
   });
 
-  console.log("Seed completado. Usuario admin: admin / admin123");
+  console.log("Listo. Usuario admin: admin / admin123 (cámbiala después de la primera entrada).");
 }
 
 main()

@@ -2,27 +2,32 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LockKeyhole } from "lucide-react";
-
-// Demo: credenciales fijas en el cliente para que el panel funcione sin backend.
-// TODO: conectar backend — reemplazar por POST a `${API_URL}/auth/login`,
-// guardar el JWT devuelto (p. ej. en una cookie httpOnly) y validar en el servidor.
-const USUARIO_DEMO = "admin";
-const CLAVE_DEMO = "administrador1051";
+import { LockKeyhole, Loader2 } from "lucide-react";
+import { iniciarSesion } from "@/lib/api";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [usuario, setUsuario] = useState("");
   const [clave, setClave] = useState("");
   const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (usuario === USUARIO_DEMO && clave === CLAVE_DEMO) {
-      sessionStorage.setItem("admin-autenticado", "true");
-      router.push("/admin/dashboard");
-    } else {
-      setError("Usuario o contraseña incorrectos.");
+    setError("");
+    setCargando(true);
+    try {
+      const ok = await iniciarSesion(usuario, clave);
+      if (ok) {
+        sessionStorage.setItem("admin-autenticado", "true");
+        router.push("/admin/dashboard");
+      } else {
+        setError("Usuario o contraseña incorrectos.");
+      }
+    } catch {
+      setError("No se pudo conectar con el servidor. Intenta de nuevo.");
+    } finally {
+      setCargando(false);
     }
   }
 
@@ -62,11 +67,15 @@ export default function AdminLoginPage() {
 
         {error && <p className="mb-3 text-sm text-ember">{error}</p>}
 
-        <button className="w-full rounded-full bg-ember py-3 font-semibold transition hover:bg-ember-dark">
+        <button
+          disabled={cargando}
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-ember py-3 font-semibold transition hover:bg-ember-dark disabled:opacity-60"
+        >
+          {cargando && <Loader2 size={16} className="animate-spin" />}
           Ingresar
         </button>
         <p className="mt-4 text-center text-xs text-cream/40">
-          ADMINISTRADOR
+          Demo (sin backend conectado): admin / admin123
         </p>
       </form>
     </main>

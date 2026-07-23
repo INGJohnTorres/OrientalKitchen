@@ -110,8 +110,8 @@ export default function EditorProductos() {
     actualizar({ ...producto, variantes });
   }
 
-  function descargarExport() {
-    const json = exportarCatalogoJSON();
+  async function descargarExport() {
+    const json = await exportarCatalogoJSON();
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

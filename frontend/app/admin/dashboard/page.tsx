@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Bell, LogOut, DollarSign, ClipboardList, ChefHat, Package } from "lucide-react";
-import { actualizarEstadoPedido, obtenerPedidos } from "@/lib/api";
+import { actualizarEstadoPedido, cerrarSesion as cerrarSesionApi, obtenerPedidos } from "@/lib/api";
 import { emojiParaProducto } from "@/lib/whatsapp";
 import { EstadoPedido, Pedido } from "@/lib/types";
 import clsx from "clsx";
@@ -58,6 +58,7 @@ export default function AdminDashboard() {
 
   function cerrarSesion() {
     sessionStorage.removeItem("admin-autenticado");
+    cerrarSesionApi();
     router.push("/admin");
   }
 

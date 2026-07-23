@@ -32,7 +32,7 @@ restaurant-app/
 - Rutas documentadas para productos, categorías, pedidos y auth.
 - Envío de correo con Nodemailer (opción 3 de envío de pedido).
 
-> Nota honesta: no puedo instalar dependencias ni levantar un servidor Postgres desde este entorno de chat (no tengo acceso a red ni a una base de datos real). Por eso el frontend funciona de forma autónoma con datos de ejemplo y localStorage, y el backend queda listo, documentado y completo para que lo instales y despliegues en minutos siguiendo los pasos de abajo. Si quieres que lo dejemos corriendo y conectado de punta a punta, **Claude Code** (la app de escritorio/terminal) es el lugar ideal para ese siguiente paso: puede instalar dependencias, levantar Postgres localmente y probar todo en vivo.
+> Nota honesta: no puedo levantar un servidor Postgres real ni desplegar a Railway/Render/Vercel desde este entorno de chat (no tengo acceso a esas plataformas ni a red para instalar paquetes de terceros). Lo que sí está 100% hecho es el código: el backend completo (Express + Prisma + Postgres) y la conexión automática desde el frontend (`lib/api.ts` cambia de modo demo a modo backend con una sola variable de entorno, sin tocar código). Lo único que falta es la parte de infraestructura — crear las cuentas y darle "deploy" — que tienes que hacer tú (o yo puedo guiarte paso a paso). Si prefieres que alguien más "avanzado" que yo en este momento lo instale y verifique en vivo por ti, **Claude Code** (la app de escritorio/terminal) puede instalar dependencias, levantar Postgres localmente y probar todo de punta a punta.
 
 ---
 
@@ -98,7 +98,17 @@ La API queda disponible en `http://localhost:4000/api`. Endpoints principales:
 
 ## 4. Conectar el frontend al backend real
 
-En `frontend/lib/api.ts` cambia las funciones que hoy leen `menu-data.ts` (datos de ejemplo) para que hagan `fetch(process.env.NEXT_PUBLIC_API_URL + "/productos")`, etc. Está señalado con comentarios `// TODO: conectar backend` en ese archivo.
+**Ya está hecho — no hay que tocar ningún código.** `frontend/lib/api.ts` detecta automáticamente si `NEXT_PUBLIC_API_URL` está definida:
+
+- **Sin esa variable** → todo funciona en modo demo (localStorage del navegador), como hasta ahora.
+- **Con esa variable** (ej. `NEXT_PUBLIC_API_URL=https://tu-backend.up.railway.app/api`) → el menú, el carrito, el login admin, el editor de productos y los pedidos empiezan a hablar con la API real / Postgres automáticamente.
+
+Solo tienes que:
+1. Desplegar `backend/` (ver sección 6).
+2. Agregar `NEXT_PUBLIC_API_URL` en las variables de entorno de tu proyecto en Vercel, apuntando a tu backend desplegado + `/api`.
+3. Redesplegar el frontend (Vercel → Deployments → Redeploy) para que tome la variable nueva.
+
+Después de esto, el usuario/clave del panel admin deja de ser el fijo `admin/admin123` del modo demo — se valida contra la tabla `usuarios` de Postgres (sembrada con `admin/admin123` por el seed, cámbiala apenas entres).
 
 ---
 
@@ -128,8 +138,11 @@ El número de mesa se guarda automáticamente en el carrito y viaja en el mensaj
 1. Sube `backend/` a un repo de GitHub.
 2. Crea un servicio nuevo en Railway/Render apuntando a ese repo.
 3. Agrega un servicio de PostgreSQL (Railway y Render lo ofrecen con un clic) y copia la `DATABASE_URL` generada a las variables de entorno.
-4. Comando de build: `npm install && npx prisma generate && npx prisma migrate deploy`.
-5. Comando de start: `npm run start`.
+4. Agrega también `JWT_SECRET` (cualquier cadena larga aleatoria) y `CORS_ORIGIN` (la URL de tu frontend en Vercel, ej. `https://oriental-kitchen.vercel.app`).
+5. Comando de build: `npm install && npx prisma generate && npx prisma migrate deploy`.
+6. Comando de start: `npm run start`.
+7. **Siembra el menú real**: una vez desplegado, corre una vez `npx prisma db seed` (Railway/Render permiten ejecutar un comando puntual desde su panel, o hazlo localmente apuntando tu `DATABASE_URL` de producción). Esto carga las 51 categorías/productos reales de Oriental Kitchen desde `prisma/seed-data.json` — incluidas las fotos, precios y variantes tal como están hoy en el menú. Es seguro correrlo más de una vez (usa upsert, no duplica nada).
+8. Copia la URL pública que te da Railway/Render (ej. `https://oriental-kitchen-backend.up.railway.app`) — esa + `/api` es tu `NEXT_PUBLIC_API_URL` para el paso 4.
 
 **PostgreSQL**: usa la base gestionada de Railway/Render, o Supabase/Neon si prefieres.
 

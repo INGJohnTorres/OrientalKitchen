@@ -8,42 +8,36 @@ datasource db {
 }
 
 model Categoria {
-  id        String     @id @default(cuid())
-  nombre    String
-  orden     Int        @default(0)
-  productos Producto[]
-  creadoEn  DateTime   @default(now())
+  id          String     @id @default(cuid())
+  nombre      String
+  orden       Int        @default(0)
+  estiloLista Boolean    @default(false)
+  productos   Producto[]
+  creadoEn    DateTime   @default(now())
 
   @@map("categorias")
 }
 
 model Producto {
-  id           String          @id @default(cuid())
-  nombre       String
-  descripcion  String
-  precio       Int
-  imagen       String
-  activo       Boolean         @default(true)
-  destacado    Boolean         @default(false)
-  masVendido   Boolean         @default(false)
-  etiquetas    String[]        @default([])
-  categoriaId  String
-  categoria    Categoria       @relation(fields: [categoriaId], references: [id])
-  detalles     DetallePedido[]
-  creadoEn     DateTime        @default(now())
-  actualizadoEn DateTime       @updatedAt
+  id            String    @id @default(cuid())
+  nombre        String
+  descripcion   String    @default("")
+  precio        Int
+  imagen        String?
+  activo        Boolean   @default(true)
+  destacado     Boolean   @default(false)
+  masVendido    Boolean   @default(false)
+  etiquetas     String[]  @default([])
+  // Variantes (proteína/adición) tal como las usa el frontend:
+  // [{ id, nombre, precio, descripcion? }, ...]. Se guardan como JSON en vez
+  // de una tabla aparte porque siempre viven y se editan junto al producto.
+  variantes     Json?
+  categoriaId   String
+  categoria     Categoria @relation(fields: [categoriaId], references: [id])
+  creadoEn      DateTime  @default(now())
+  actualizadoEn DateTime  @updatedAt
 
   @@map("productos")
-}
-
-model Cliente {
-  id        String   @id @default(cuid())
-  nombre    String
-  telefono  String?
-  pedidos   Pedido[]
-  creadoEn  DateTime @default(now())
-
-  @@map("clientes")
 }
 
 enum EstadoPedido {
@@ -59,9 +53,7 @@ model Pedido {
   id            String          @id @default(cuid())
   numero        Int             @default(autoincrement())
   mesa          String
-  clienteId     String?
-  cliente       Cliente?        @relation(fields: [clienteId], references: [id])
-  nombreCliente String
+  cliente       String
   telefono      String?
   observaciones String?
   total         Int
@@ -73,14 +65,24 @@ model Pedido {
   @@map("pedidos")
 }
 
+/**
+ * Línea de pedido "congelada" en el momento de la compra: guarda el nombre
+ * final (incluida la variante, ej. "Arroz Chino Personal — + Lomo de Cerdo")
+ * y el precio que se cobró, para que un cambio de precio futuro en el
+ * catálogo no altere pedidos ya hechos. productoId queda como referencia
+ * opcional (se pierde si el producto se borra, por eso onDelete: SetNull).
+ */
 model DetallePedido {
-  id           String   @id @default(cuid())
-  pedidoId     String
-  pedido       Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
-  productoId   String
-  producto     Producto @relation(fields: [productoId], references: [id])
-  cantidad     Int
-  precioUnidad Int
+  id             String    @id @default(cuid())
+  pedidoId       String
+  pedido         Pedido    @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  productoId     String?
+  producto       Producto? @relation(fields: [productoId], references: [id], onDelete: SetNull)
+  claveUnica     String
+  nombre         String
+  imagen         String?
+  precioUnitario Int
+  cantidad       Int
 
   @@map("detalle_pedidos")
 }
@@ -96,10 +98,10 @@ model Usuario {
 }
 
 model Configuracion {
-  id                String @id @default(cuid())
-  nombreRestaurante String
-  logoUrl           String?
-  numeroWhatsapp    String
+  id                 String  @id @default(cuid())
+  nombreRestaurante  String
+  logoUrl            String?
+  numeroWhatsapp     String
   correoNotificacion String?
 
   @@map("configuracion")
