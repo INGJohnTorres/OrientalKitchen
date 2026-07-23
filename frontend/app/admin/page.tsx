@@ -8,7 +8,7 @@ import { LockKeyhole } from "lucide-react";
 // TODO: conectar backend — reemplazar por POST a `${API_URL}/auth/login`,
 // guardar el JWT devuelto (p. ej. en una cookie httpOnly) y validar en el servidor.
 const USUARIO_DEMO = "admin";
-const CLAVE_DEMO = "admin123";
+const CLAVE_DEMO = "administrador1051";
 
 export default function AdminLoginPage() {
   const router = useRouter();
