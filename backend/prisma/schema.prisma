@@ -24,7 +24,6 @@ model Producto {
   descripcion   String    @default("")
   precio        Int
   imagen        String?
-  detallePedidos DetallePedido[]
   activo        Boolean   @default(true)
   destacado     Boolean   @default(false)
   masVendido    Boolean   @default(false)
@@ -66,7 +65,13 @@ model Pedido {
   @@map("pedidos")
 }
 
-
+/**
+ * Línea de pedido "congelada" en el momento de la compra: guarda el nombre
+ * final (incluida la variante, ej. "Arroz Chino Personal — + Lomo de Cerdo")
+ * y el precio que se cobró, para que un cambio de precio futuro en el
+ * catálogo no altere pedidos ya hechos. productoId queda como referencia
+ * opcional (se pierde si el producto se borra, por eso onDelete: SetNull).
+ */
 model DetallePedido {
   id             String    @id @default(cuid())
   pedidoId       String

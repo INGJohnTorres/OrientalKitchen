@@ -55,7 +55,7 @@ router.post("/", asyncHandler(async (req, res) => {
     include: { items: true },
   });
 
-  const resumen = pedido.items.map((i: any) => `${i.cantidad} x ${i.nombre}`).join("\n");
+  const resumen = pedido.items.map((i) => `${i.cantidad} x ${i.nombre}`).join("\n");
   enviarCorreoPedido(
     `Mesa: ${mesa}\nCliente: ${cliente}\n\n${resumen}\n\nTotal: $${total}`
   ).catch((err) => console.error("Error enviando correo:", err));
