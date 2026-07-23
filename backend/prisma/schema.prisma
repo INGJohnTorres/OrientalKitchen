@@ -1,5 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Railway/Render suelen construir y ejecutar la app en contenedores Debian
+  // basados en distintas versiones de OpenSSL. Si no se listan explícitamente,
+  // Prisma a veces genera el motor solo para el sistema donde corrió el build
+  // y falla al arrancar con "@prisma/client did not initialize yet" aunque
+  // "prisma generate" sí se haya ejecutado sin errores.
+  binaryTargets = ["native", "debian-openssl-3.0.x", "debian-openssl-1.1.x"]
 }
 
 datasource db {
@@ -65,13 +71,11 @@ model Pedido {
   @@map("pedidos")
 }
 
-/**
- * Línea de pedido "congelada" en el momento de la compra: guarda el nombre
- * final (incluida la variante, ej. "Arroz Chino Personal — + Lomo de Cerdo")
- * y el precio que se cobró, para que un cambio de precio futuro en el
- * catálogo no altere pedidos ya hechos. productoId queda como referencia
- * opcional (se pierde si el producto se borra, por eso onDelete: SetNull).
- */
+// Línea de pedido "congelada" en el momento de la compra: guarda el nombre
+// final (incluida la variante, ej. "Arroz Chino Personal — + Lomo de Cerdo")
+// y el precio que se cobró, para que un cambio de precio futuro en el
+// catálogo no altere pedidos ya hechos. productoId queda como referencia
+// opcional (se pierde si el producto se borra, por eso onDelete: SetNull).
 model DetallePedido {
   id             String    @id @default(cuid())
   pedidoId       String
