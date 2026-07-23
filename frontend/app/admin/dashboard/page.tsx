@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Bell, LogOut, DollarSign, ClipboardList, ChefHat } from "lucide-react";
 import { actualizarEstadoPedido, obtenerPedidos } from "@/lib/api";
+import { emojiParaProducto } from "@/lib/whatsapp";
 import { EstadoPedido, Pedido } from "@/lib/types";
 import clsx from "clsx";
 
@@ -149,7 +150,7 @@ export default function AdminDashboard() {
                     <p>Mesa {p.mesa} — {p.cliente}</p>
                     <ul className="my-2 list-disc pl-4 text-espresso/70 dark:text-cream/70">
                       {p.items.map((i) => (
-                        <li key={i.claveUnica}>{i.cantidad} {i.nombre}</li>
+                        <li key={i.claveUnica}>{emojiParaProducto(i.nombre)} {i.cantidad} {i.nombre}</li>
                       ))}
                     </ul>
                     {p.observaciones && (

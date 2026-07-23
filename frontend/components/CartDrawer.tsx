@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Minus, Plus, Trash2, X, MessageCircle, ArrowLeft, UtensilsCrossed } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
 import { DatosCliente } from "@/lib/types";
-import { enviarPedidoPorWhatsApp } from "@/lib/whatsapp";
+import { enviarPedidoPorWhatsApp, emojiParaProducto } from "@/lib/whatsapp";
 import { crearPedido } from "@/lib/api";
 
 type Paso = "carrito" | "datos" | "confirmacion" | "enviado";
@@ -178,7 +178,7 @@ export default function CartDrawer({ onClose }: { onClose: () => void }) {
                 <div className="my-2 border-t border-dashed border-espresso/20 dark:border-cream/20" />
                 {items.map((item) => (
                   <p key={item.claveUnica}>
-                    {item.cantidad} {item.nombre}
+                    {emojiParaProducto(item.nombre)} {item.cantidad} {item.nombre}
                   </p>
                 ))}
                 {cliente.observaciones && (

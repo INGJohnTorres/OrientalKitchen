@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Flame, Volume2, VolumeX } from "lucide-react";
 import { actualizarEstadoPedido, obtenerPedidos } from "@/lib/api";
 import { EstadoPedido, Pedido } from "@/lib/types";
+import { emojiParaProducto } from "@/lib/whatsapp";
 
 const columnas: { estado: EstadoPedido; titulo: string; color: string }[] = [
   { estado: "nuevo", titulo: "🆕 Nuevos", color: "border-ember" },
@@ -100,7 +101,7 @@ export default function VistaCocina() {
                     <ul className="mb-3 space-y-1 text-lg">
                       {p.items.map((i) => (
                         <li key={i.claveUnica}>
-                          <span className="font-bold text-mustard">{i.cantidad}×</span> {i.nombre}
+                          <span className="font-bold text-mustard">{i.cantidad}×</span> {emojiParaProducto(i.nombre)} {i.nombre}
                         </li>
                       ))}
                     </ul>
