@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
           Ingresar
         </button>
         <p className="mt-4 text-center text-xs text-cream/40">
-          Demo: admin / admin123
+          ADMINISTRADOR: Todos los derechos reservados
         </p>
       </form>
     </main>
