@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bell, LogOut, DollarSign, ClipboardList, ChefHat, Package } from "lucide-react";
+import { Bell, LogOut, DollarSign, ClipboardList, ChefHat, Package, Settings } from "lucide-react";
 import { actualizarEstadoPedido, cerrarSesion as cerrarSesionApi, obtenerPedidos } from "@/lib/api";
 import { emojiParaProducto } from "@/lib/whatsapp";
 import { EstadoPedido, Pedido } from "@/lib/types";
@@ -80,6 +80,13 @@ export default function AdminDashboard() {
             className="flex items-center gap-1.5 rounded-full border border-espresso/20 px-4 py-2 text-sm font-medium transition hover:border-ember hover:text-ember dark:border-cream/20"
           >
             <Package size={16} /> Editar productos
+          </Link>
+          <Link
+            href="/admin/configuracion"
+            className="grid h-9 w-9 place-items-center rounded-full border border-espresso/20 transition hover:border-ember hover:text-ember dark:border-cream/20"
+            aria-label="Configuración"
+          >
+            <Settings size={16} />
           </Link>
           <Link
             href="/admin/cocina"

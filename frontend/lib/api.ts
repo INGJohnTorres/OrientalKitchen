@@ -71,6 +71,36 @@ export function cerrarSesion(): void {
   localStorage.removeItem(CLAVE_TOKEN);
 }
 
+/**
+ * Cambia la contraseña del admin. Solo funciona en modo backend (necesita un
+ * usuario real en Postgres para poder verificar la clave actual y guardarla).
+ */
+export async function cambiarClave(
+  claveActual: string,
+  claveNueva: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (!modoBackend()) {
+    return {
+      ok: false,
+      error: "Cambiar la contraseña requiere el backend conectado (ver NEXT_PUBLIC_API_URL).",
+    };
+  }
+  try {
+    const res = await fetch(`${API_URL}/auth/clave`, {
+      method: "PATCH",
+      headers: headersAuth(),
+      body: JSON.stringify({ claveActual, claveNueva }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, error: data.error || "No se pudo cambiar la contraseña." };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "No se pudo conectar con el servidor." };
+  }
+}
+
 // ---------- Catálogo (modo demo: localStorage) ----------
 
 interface Catalogo {
