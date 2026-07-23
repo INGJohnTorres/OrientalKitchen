@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bell, LogOut, DollarSign, ClipboardList, ChefHat } from "lucide-react";
+import { Bell, LogOut, DollarSign, ClipboardList, ChefHat, Package } from "lucide-react";
 import { actualizarEstadoPedido, obtenerPedidos } from "@/lib/api";
 import { emojiParaProducto } from "@/lib/whatsapp";
 import { EstadoPedido, Pedido } from "@/lib/types";
@@ -74,6 +74,12 @@ export default function AdminDashboard() {
       <header className="flex items-center justify-between border-b border-espresso/10 bg-white/60 px-6 py-4 dark:border-cream/10 dark:bg-cocoa/40">
         <h1 className="font-display text-xl font-semibold">Panel — Oriental Kitchen</h1>
         <div className="flex items-center gap-4">
+          <Link
+            href="/admin/productos"
+            className="flex items-center gap-1.5 rounded-full border border-espresso/20 px-4 py-2 text-sm font-medium transition hover:border-ember hover:text-ember dark:border-cream/20"
+          >
+            <Package size={16} /> Editar productos
+          </Link>
           <Link
             href="/admin/cocina"
             className="flex items-center gap-1.5 rounded-full bg-ember px-4 py-2 text-sm font-medium text-cream transition hover:bg-ember-dark"
