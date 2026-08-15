@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Facebook, Instagram, MessageCircle } from "lucide-react";
 import { redes } from "@/lib/social";
+import SocialBadge from "./SocialBadge";
 
 export default function Footer() {
   const año = new Date().getFullYear();
@@ -23,33 +24,48 @@ export default function Footer() {
 
         <div className="flex flex-col items-center gap-3 sm:items-start">
           <span className="font-mono text-xs uppercase tracking-widest text-cream/40">Síguenos</span>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <a
               href={redes.whatsapp()}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Escríbenos por WhatsApp"
-              className="grid h-11 w-11 place-items-center rounded-full bg-cream/5 text-cream transition hover:-translate-y-1 hover:bg-olive"
+              className="group"
             >
-              <MessageCircle size={19} />
+              <SocialBadge claseColor="text-[#25D366]">
+                <MessageCircle size={19} strokeWidth={2.2} />
+              </SocialBadge>
             </a>
             <a
               href={redes.facebook}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Síguenos en Facebook"
-              className="grid h-11 w-11 place-items-center rounded-full bg-cream/5 text-cream transition hover:-translate-y-1 hover:bg-[#1877F2]"
+              className="group"
             >
-              <Facebook size={19} />
+              <SocialBadge claseColor="text-[#1877F2]">
+                <Facebook size={19} strokeWidth={2.2} />
+              </SocialBadge>
             </a>
             <a
               href={redes.instagram}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Síguenos en Instagram"
-              className="grid h-11 w-11 place-items-center rounded-full bg-cream/5 text-cream transition hover:-translate-y-1 hover:bg-gradient-to-br hover:from-[#F58529] hover:via-[#DD2A7B] hover:to-[#8134AF]"
+              className="group"
             >
-              <Instagram size={19} />
+              <svg width="0" height="0">
+                <defs>
+                  <linearGradient id="ig-gradiente" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#F58529" />
+                    <stop offset="50%" stopColor="#DD2A7B" />
+                    <stop offset="100%" stopColor="#8134AF" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <SocialBadge gradienteId="ig-gradiente">
+                <Instagram size={19} strokeWidth={2.2} />
+              </SocialBadge>
             </a>
           </div>
         </div>
