@@ -22,7 +22,29 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "Oriental Kitchen — Los expertos en arroz",
-  description: "Escanea, elige y disfruta. Menú digital de Oriental Kitchen.",
+  description:
+    "Cocina oriental con alma colombiana en Bogotá. Arroz chino, platos especiales, comida rápida y más. Pide en línea o por WhatsApp, para mesa o domicilio.",
+  keywords: [
+    "Oriental Kitchen",
+    "arroz chino Bogotá",
+    "comida oriental",
+    "restaurante asiático",
+    "domicilios comida china",
+  ],
+  openGraph: {
+    title: "Oriental Kitchen — Los expertos en arroz",
+    description:
+      "Cocina oriental con alma colombiana. Descubre el menú y pide en línea o por WhatsApp.",
+    images: ["/panda-chef.png"],
+    locale: "es_CO",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Oriental Kitchen — Los expertos en arroz",
+    description: "Cocina oriental con alma colombiana. Descubre el menú y pide en línea.",
+    images: ["/panda-chef.png"],
+  },
 };
 
 export default function RootLayout({

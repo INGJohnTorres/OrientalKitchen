@@ -16,6 +16,7 @@ import { useCartStore } from "@/lib/cart-store";
 function MenuContent() {
   const searchParams = useSearchParams();
   const mesaUrl = searchParams.get("mesa");
+  const categoriaUrl = searchParams.get("categoria");
   const setMesa = useCartStore((s) => s.setMesa);
   const mesaActual = useCartStore((s) => s.mesa);
   const cantidadCarrito = useCartStore((s) => s.cantidadTotal());
@@ -33,9 +34,13 @@ function MenuContent() {
   useEffect(() => {
     obtenerCategorias().then((cats) => {
       setCategorias(cats);
-      setCategoriaActiva(cats[0]?.id ?? "");
+      // Si llegamos desde un enlace de categoría (ej. la portada), la usamos
+      // directo; si no existe o no vino, caemos a la primera categoría.
+      const existe = categoriaUrl && cats.some((c) => c.id === categoriaUrl);
+      setCategoriaActiva(existe ? categoriaUrl! : cats[0]?.id ?? "");
     });
     obtenerProductos().then(setProductos);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const productosFiltrados = useMemo(() => {

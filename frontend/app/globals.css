@@ -4,6 +4,13 @@
 
 :root {
   color-scheme: light;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    scroll-behavior: auto;
+  }
 }
 
 html.dark {
