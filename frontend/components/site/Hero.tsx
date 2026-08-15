@@ -27,14 +27,20 @@ export default function Hero() {
       <BambooAccent className="absolute -left-4 top-0 h-full w-24 opacity-70 sm:w-32" />
       <BambooAccent flip className="absolute -right-4 top-0 h-full w-24 opacity-70 sm:w-32" />
 
-      <div className="relative z-10 mx-auto w-full max-w-4xl px-6 pt-16 text-center">
+      <div className="relative z-10 mx-auto w-full max-w-4xl px-6 pt-10 text-center">
         <div
-          className={`mx-auto mb-5 flex items-center justify-center transition-all duration-700 ${
+          className={`relative mx-auto mb-2 flex items-center justify-center transition-all duration-700 ${
             listo ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
           }`}
         >
-          <div className="relative h-20 w-20 sm:h-24 sm:w-24">
-            <Image src="/panda-chef.png" alt="Panda chef, mascota de Oriental Kitchen" fill className="object-contain drop-shadow-xl" />
+          <div className="absolute h-28 w-28 rounded-full bg-mustard/25 blur-2xl sm:h-40 sm:w-40" />
+          <div className="relative h-36 w-36 sm:h-44 sm:w-44 lg:h-52 lg:w-52">
+            <Image
+              src="/panda-chef.png"
+              alt="Panda chef, mascota de Oriental Kitchen"
+              fill
+              className="object-contain drop-shadow-2xl"
+            />
           </div>
         </div>
 
