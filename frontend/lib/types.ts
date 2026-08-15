@@ -53,7 +53,13 @@ export interface DatosPedidoRapido {
   nombre: string;
   telefono: string;
   tipoEntrega: "domicilio" | "recoger";
-  direccion?: string;
+  /** Punto marcado en el mapa (solo para domicilio). */
+  ubicacion?: { lat: number; lng: number; direccion: string };
+  /** Detalles extra de la dirección (apto, torre, indicaciones) — opcional. */
+  detalleDireccion?: string;
+  /** Método elegido para pagar por adelantado (solo para "recoger"). */
+  metodoPago?: "nequi" | "daviplata";
+  pagoConfirmado?: boolean;
   observaciones?: string;
 }
 

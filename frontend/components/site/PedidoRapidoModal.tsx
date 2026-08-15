@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import {
   X,
@@ -12,15 +13,27 @@ import {
   Plus,
   Trash2,
   UtensilsCrossed,
+  CheckCircle2,
+  Copy,
 } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
 import { obtenerCategorias, obtenerProductos, crearPedido } from "@/lib/api";
 import { Categoria, DatosPedidoRapido, Producto } from "@/lib/types";
 import { enviarPedidoRapidoPorWhatsApp, emojiParaProducto } from "@/lib/whatsapp";
+import { cuentasPago } from "@/lib/social";
 import CategoryNav from "@/components/CategoryNav";
 import ProductCard from "@/components/ProductCard";
 
-type Paso = "productos" | "carrito" | "datos" | "confirmacion" | "enviado";
+const MapaUbicacion = dynamic(() => import("./MapaUbicacion"), {
+  ssr: false,
+  loading: () => (
+    <div className="grid h-56 w-full place-items-center rounded-xl border border-espresso/20 text-sm text-espresso/40 dark:border-cream/20 dark:text-cream/40">
+      Cargando mapa...
+    </div>
+  ),
+});
+
+type Paso = "productos" | "carrito" | "datos" | "pago" | "confirmacion" | "enviado";
 
 function formatoMoneda(v: number) {
   return (v ?? 0).toLocaleString("es-CO", {
@@ -40,11 +53,15 @@ export default function PedidoRapidoModal() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [categoriaActiva, setCategoriaActiva] = useState("");
   const [busqueda, setBusqueda] = useState("");
+  const [errorFormulario, setErrorFormulario] = useState("");
   const [datos, setDatos] = useState<DatosPedidoRapido>({
     nombre: "",
     telefono: "",
     tipoEntrega: "domicilio",
-    direccion: "",
+    ubicacion: undefined,
+    detalleDireccion: "",
+    metodoPago: "nequi",
+    pagoConfirmado: false,
     observaciones: "",
   });
 
@@ -78,7 +95,11 @@ export default function PedidoRapidoModal() {
     // cocina, igual que los pedidos de mesa. "mesa" se reutiliza para
     // dejar claro que es un pedido web (domicilio/recoger), no de mesa.
     const entrega =
-      datos.tipoEntrega === "domicilio" ? `Domicilio: ${datos.direccion}` : "Recoger en el local";
+      datos.tipoEntrega === "domicilio"
+        ? `Domicilio: ${datos.ubicacion?.direccion ?? "(ver ubicación en WhatsApp)"}${
+            datos.detalleDireccion ? ` — ${datos.detalleDireccion}` : ""
+          }`
+        : `Recoger en el local — pago por ${datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} (verificar comprobante)`;
     crearPedido(
       {
         nombre: datos.nombre,
@@ -98,7 +119,16 @@ export default function PedidoRapidoModal() {
     cerrar();
     setTimeout(() => {
       setPaso("productos");
-      setDatos({ nombre: "", telefono: "", tipoEntrega: "domicilio", direccion: "", observaciones: "" });
+      setDatos({
+        nombre: "",
+        telefono: "",
+        tipoEntrega: "domicilio",
+        ubicacion: undefined,
+        detalleDireccion: "",
+        metodoPago: "nequi",
+        pagoConfirmado: false,
+        observaciones: "",
+      });
     }, 300);
   }
 
@@ -112,7 +142,15 @@ export default function PedidoRapidoModal() {
             <button
               onClick={() =>
                 setPaso(
-                  paso === "confirmacion" ? "datos" : paso === "datos" ? "carrito" : "productos"
+                  paso === "confirmacion"
+                    ? datos.tipoEntrega === "recoger"
+                      ? "pago"
+                      : "datos"
+                    : paso === "pago"
+                    ? "datos"
+                    : paso === "datos"
+                    ? "carrito"
+                    : "productos"
                 )
               }
               className="grid h-9 w-9 place-items-center rounded-full hover:bg-espresso/10 dark:hover:bg-cream/10"
@@ -238,7 +276,12 @@ export default function PedidoRapidoModal() {
             className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 pt-2"
             onSubmit={(e) => {
               e.preventDefault();
-              setPaso("confirmacion");
+              if (datos.tipoEntrega === "domicilio" && !datos.ubicacion) {
+                setErrorFormulario("Marca tu ubicación en el mapa antes de continuar.");
+                return;
+              }
+              setErrorFormulario("");
+              setPaso(datos.tipoEntrega === "recoger" ? "pago" : "confirmacion");
             }}
           >
             <label className="flex flex-col gap-1 text-sm">
@@ -291,16 +334,25 @@ export default function PedidoRapidoModal() {
             </div>
 
             {datos.tipoEntrega === "domicilio" && (
-              <label className="flex flex-col gap-1 text-sm">
-                Dirección de entrega
-                <input
-                  required
-                  value={datos.direccion}
-                  onChange={(e) => setDatos({ ...datos, direccion: e.target.value })}
-                  className="rounded-lg border border-espresso/20 bg-transparent px-3 py-2 outline-none focus:border-ember dark:border-cream/20"
-                  placeholder="Ej: Calle 10 #5-20, apto 301"
-                />
-              </label>
+              <>
+                <MapaUbicacion onCambiar={(ubicacion) => setDatos((d) => ({ ...d, ubicacion }))} />
+                <label className="flex flex-col gap-1 text-sm">
+                  Detalles adicionales (apto, torre, indicaciones)
+                  <input
+                    value={datos.detalleDireccion}
+                    onChange={(e) => setDatos({ ...datos, detalleDireccion: e.target.value })}
+                    className="rounded-lg border border-espresso/20 bg-transparent px-3 py-2 outline-none focus:border-ember dark:border-cream/20"
+                    placeholder="Ej: Torre 3, apto 301, portería azul"
+                  />
+                </label>
+              </>
+            )}
+
+            {datos.tipoEntrega === "recoger" && (
+              <p className="rounded-lg bg-mustard/10 px-3 py-2.5 text-xs text-mustard">
+                Para recoger en el local, en el siguiente paso te pedimos confirmar el pago por
+                adelantado (Nequi o Daviplata).
+              </p>
             )}
 
             <label className="flex flex-col gap-1 text-sm">
@@ -314,10 +366,93 @@ export default function PedidoRapidoModal() {
               />
             </label>
 
+            {errorFormulario && <p className="text-sm text-ember">{errorFormulario}</p>}
+
             <button type="submit" className="mt-2 rounded-full bg-ember py-3 font-semibold text-cream transition hover:bg-ember-dark">
-              Revisar pedido
+              {datos.tipoEntrega === "recoger" ? "Continuar al pago" : "Revisar pedido"}
             </button>
           </form>
+        )}
+
+        {/* ---------- PASO: pago anticipado (solo "recoger en el local") ---------- */}
+        {paso === "pago" && (
+          <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 pt-2">
+            <p className="text-sm text-espresso/70 dark:text-cream/70">
+              Para recoger en el local, primero necesitamos confirmar el pago. Transfiere el total
+              de tu pedido a una de estas cuentas y adjunta el comprobante en el chat de WhatsApp
+              cuando lo enviemos.
+            </p>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDatos({ ...datos, metodoPago: "nequi" })}
+                className={`flex-1 rounded-full border px-4 py-2.5 text-sm font-medium transition ${
+                  datos.metodoPago === "nequi"
+                    ? "border-ember bg-ember text-cream"
+                    : "border-espresso/20 text-espresso/70 dark:border-cream/20 dark:text-cream/70"
+                }`}
+              >
+                Nequi
+              </button>
+              <button
+                type="button"
+                onClick={() => setDatos({ ...datos, metodoPago: "daviplata" })}
+                className={`flex-1 rounded-full border px-4 py-2.5 text-sm font-medium transition ${
+                  datos.metodoPago === "daviplata"
+                    ? "border-ember bg-ember text-cream"
+                    : "border-espresso/20 text-espresso/70 dark:border-cream/20 dark:text-cream/70"
+                }`}
+              >
+                Daviplata
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl border border-dashed border-mustard/50 bg-mustard/10 px-4 py-3.5">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-mustard">
+                  {datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} de Oriental Kitchen
+                </p>
+                <p className="font-mono text-lg font-semibold">
+                  {datos.metodoPago === "daviplata" ? cuentasPago.daviplata : cuentasPago.nequi}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  navigator.clipboard?.writeText(
+                    datos.metodoPago === "daviplata" ? cuentasPago.daviplata : cuentasPago.nequi
+                  )
+                }
+                aria-label="Copiar número"
+                className="grid h-9 w-9 place-items-center rounded-full bg-espresso/10 text-espresso/70 dark:bg-cream/10 dark:text-cream/70"
+              >
+                <Copy size={15} />
+              </button>
+            </div>
+
+            <p className="rounded-lg bg-espresso/5 px-3 py-2.5 text-xs text-espresso/60 dark:bg-cream/5 dark:text-cream/60">
+              Total a transferir: <span className="font-mono font-semibold">{formatoMoneda(total())}</span>
+            </p>
+
+            <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-espresso/15 px-3 py-3 text-sm dark:border-cream/15">
+              <input
+                type="checkbox"
+                checked={datos.pagoConfirmado}
+                onChange={(e) => setDatos({ ...datos, pagoConfirmado: e.target.checked })}
+                className="mt-0.5 h-4 w-4 accent-ember"
+              />
+              Ya realicé la transferencia y voy a enviar el comprobante por este chat de WhatsApp.
+            </label>
+
+            <button
+              disabled={!datos.pagoConfirmado}
+              onClick={() => setPaso("confirmacion")}
+              className="flex items-center justify-center gap-2 rounded-full bg-ember py-3 font-semibold text-cream transition hover:bg-ember-dark disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <CheckCircle2 size={18} /> Continuar
+            </button>
+          </div>
         )}
 
         {/* ---------- PASO: confirmación ---------- */}
@@ -329,7 +464,16 @@ export default function PedidoRapidoModal() {
             <div className="rounded-lg border border-dashed border-espresso/20 p-4 font-mono text-sm dark:border-cream/20">
               <p>Cliente: {datos.nombre}</p>
               <p>Teléfono: {datos.telefono}</p>
-              <p>{datos.tipoEntrega === "domicilio" ? `Domicilio: ${datos.direccion}` : "Recoger en el local"}</p>
+              {datos.tipoEntrega === "domicilio" ? (
+                <>
+                  <p>Domicilio: {datos.ubicacion?.direccion}</p>
+                  {datos.detalleDireccion && <p>Detalle: {datos.detalleDireccion}</p>}
+                </>
+              ) : (
+                <p>
+                  Recoger en el local — pago por {datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} ✓
+                </p>
+              )}
               <div className="my-2 border-t border-dashed border-espresso/20 dark:border-cream/20" />
               {items.map((item) => (
                 <p key={item.claveUnica}>

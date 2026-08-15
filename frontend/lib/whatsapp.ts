@@ -144,10 +144,23 @@ export function construirMensajePedidoRapido(
   let mensaje = `${EMOJI.recibo} Nuevo Pedido (desde la página web)\n\n`;
   mensaje += `Cliente: ${datos.nombre}\n`;
   mensaje += `Teléfono: ${datos.telefono}\n`;
-  mensaje +=
-    datos.tipoEntrega === "domicilio"
-      ? `Entrega: A domicilio — ${datos.direccion}\n\n`
-      : `Entrega: Recoger en el local\n\n`;
+
+  if (datos.tipoEntrega === "domicilio") {
+    mensaje += `Entrega: A domicilio\n`;
+    if (datos.ubicacion) {
+      mensaje += `Ubicación: ${datos.ubicacion.direccion}\n`;
+      mensaje += `Ver en el mapa: https://www.google.com/maps?q=${datos.ubicacion.lat},${datos.ubicacion.lng}\n`;
+    }
+    if (datos.detalleDireccion?.trim()) {
+      mensaje += `Detalle (apto/torre/indicaciones): ${datos.detalleDireccion.trim()}\n`;
+    }
+    mensaje += `\n`;
+  } else {
+    const metodo = datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi";
+    mensaje += `Entrega: Recoger en el local\n`;
+    mensaje += `Pago: ${metodo} — cliente confirma que ya realizó la transferencia (adjunta comprobante en este chat)\n\n`;
+  }
+
   mensaje += `Pedido:\n${lineasPedido}\n\n`;
 
   if (datos.observaciones?.trim()) {

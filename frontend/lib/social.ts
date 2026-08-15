@@ -19,3 +19,13 @@ export const redes = {
   facebook: "https://www.facebook.com/p/Oriental-Kitchen-100063602407527/",
   instagram: "https://www.instagram.com/oriental.kitchen_/",
 };
+
+/**
+ * Cuentas para pago manual anticipado (pedidos "recoger en el local").
+ * No hay pasarela de pagos conectada — el cliente transfiere y manda el
+ * comprobante por WhatsApp antes de que se prepare el pedido.
+ */
+export const cuentasPago = {
+  nequi: numeroWhatsApp(),
+  daviplata: numeroWhatsApp(),
+};
