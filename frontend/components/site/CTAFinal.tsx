@@ -3,11 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { urlWhatsAppMensaje, MENSAJE_CONTACTO_RAPIDO } from "@/lib/social";
+import { useCartStore } from "@/lib/cart-store";
 import Reveal from "./Reveal";
 import BambooAccent from "./BambooAccent";
 
 export default function CTAFinal() {
+  const abrirPedidoRapido = useCartStore((s) => s.abrirPedidoRapido);
+
   return (
     <section id="contacto" className="relative scroll-mt-20 overflow-hidden bg-ember px-5 py-20 sm:py-28">
       <BambooAccent className="absolute -left-6 top-0 h-full w-28 opacity-25 mix-blend-multiply sm:w-40" />
@@ -30,14 +32,12 @@ export default function CTAFinal() {
           >
             Ver menú 🍽️
           </Link>
-          <a
-            href={urlWhatsAppMensaje(MENSAJE_CONTACTO_RAPIDO)}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={abrirPedidoRapido}
             className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-cream px-8 py-4 text-base font-semibold text-cream transition hover:scale-105 hover:bg-cream hover:text-ember sm:w-auto"
           >
             <MessageCircle size={19} /> Pedir por WhatsApp
-          </a>
+          </button>
         </div>
       </Reveal>
     </section>

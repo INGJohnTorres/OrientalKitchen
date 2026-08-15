@@ -14,6 +14,10 @@ interface CartState {
   vaciar: () => void;
   total: () => number;
   cantidadTotal: () => number;
+  /** Controla el modal de "Pedido rápido por WhatsApp" de la página principal. */
+  pedidoRapidoAbierto: boolean;
+  abrirPedidoRapido: () => void;
+  cerrarPedidoRapido: () => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -53,6 +57,9 @@ export const useCartStore = create<CartState>()(
           0
         ),
       cantidadTotal: () => get().items.reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0),
+      pedidoRapidoAbierto: false,
+      abrirPedidoRapido: () => set({ pedidoRapidoAbierto: true }),
+      cerrarPedidoRapido: () => set({ pedidoRapidoAbierto: false }),
     }),
     {
       name: "carrito-restaurante",

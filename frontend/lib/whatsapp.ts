@@ -1,4 +1,4 @@
-import { DatosCliente, ItemCarrito } from "./types";
+import { DatosCliente, DatosPedidoRapido, ItemCarrito } from "./types";
 
 function formatoMoneda(valor: number) {
   return valor.toLocaleString("es-CO", {
@@ -118,6 +118,56 @@ export function enviarPedidoPorWhatsApp(
 ) {
   const numero = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "").replace(/\D/g, "");
   const mensaje = construirMensajePedido(cliente, items, total);
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+/**
+ * Construye el mensaje del "Pedido rápido" que se arma desde la página
+ * principal — igual de formato que el de mesa, pero con tipo de entrega
+ * (domicilio/recoger) en vez de número de mesa.
+ */
+export function construirMensajePedidoRapido(
+  datos: DatosPedidoRapido,
+  items: ItemCarrito[],
+  total: number
+) {
+  const hora = new Date().toLocaleTimeString("es-CO", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const lineasPedido = items
+    .map((i) => `• ${emojiParaProducto(i.nombre)} ${i.cantidad} ${i.nombre}`)
+    .join("\n");
+
+  let mensaje = `${EMOJI.recibo} Nuevo Pedido (desde la página web)\n\n`;
+  mensaje += `Cliente: ${datos.nombre}\n`;
+  mensaje += `Teléfono: ${datos.telefono}\n`;
+  mensaje +=
+    datos.tipoEntrega === "domicilio"
+      ? `Entrega: A domicilio — ${datos.direccion}\n\n`
+      : `Entrega: Recoger en el local\n\n`;
+  mensaje += `Pedido:\n${lineasPedido}\n\n`;
+
+  if (datos.observaciones?.trim()) {
+    mensaje += `${EMOJI.memo} Observaciones:\n${datos.observaciones.trim()}\n\n`;
+  }
+
+  mensaje += `${EMOJI.dinero} Total:\n${formatoMoneda(total)}\n\n`;
+  mensaje += `${EMOJI.reloj} Hora:\n${hora}`;
+
+  return mensaje;
+}
+
+/** Igual que enviarPedidoPorWhatsApp, pero para el flujo de Pedido rápido (sin mesa). */
+export function enviarPedidoRapidoPorWhatsApp(
+  datos: DatosPedidoRapido,
+  items: ItemCarrito[],
+  total: number
+) {
+  const numero = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "").replace(/\D/g, "");
+  const mensaje = construirMensajePedidoRapido(datos, items, total);
   const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank", "noopener,noreferrer");
 }

@@ -4,11 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { ShoppingBag, MessageCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { urlWhatsAppMensaje, MENSAJE_CONTACTO_RAPIDO } from "@/lib/social";
+import { useCartStore } from "@/lib/cart-store";
 import BambooAccent from "./BambooAccent";
 
 export default function Hero() {
   const [listo, setListo] = useState(false);
+  const abrirPedidoRapido = useCartStore((s) => s.abrirPedidoRapido);
   useEffect(() => setListo(true), []);
 
   return (
@@ -67,14 +68,12 @@ export default function Hero() {
           >
             <ShoppingBag size={19} /> Ver nuestro menú
           </Link>
-          <a
-            href={urlWhatsAppMensaje(MENSAJE_CONTACTO_RAPIDO)}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={abrirPedidoRapido}
             className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-mustard px-8 py-4 text-base font-semibold text-mustard transition hover:scale-105 hover:bg-mustard hover:text-espresso sm:w-auto"
           >
             <MessageCircle size={19} /> Pedir por WhatsApp
-          </a>
+          </button>
         </div>
       </div>
 

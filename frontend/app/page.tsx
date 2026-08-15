@@ -7,6 +7,7 @@ import Galeria from "@/components/site/Galeria";
 import CTAFinal from "@/components/site/CTAFinal";
 import Footer from "@/components/site/Footer";
 import WhatsAppFloat from "@/components/site/WhatsAppFloat";
+import PedidoRapidoModal from "@/components/site/PedidoRapidoModal";
 
 export default function HomePage() {
   return (
@@ -20,6 +21,7 @@ export default function HomePage() {
       <CTAFinal />
       <Footer />
       <WhatsAppFloat />
+      <PedidoRapidoModal />
     </main>
   );
 }

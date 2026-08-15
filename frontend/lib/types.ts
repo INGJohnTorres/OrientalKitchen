@@ -48,6 +48,15 @@ export interface DatosCliente {
   telefono?: string;
 }
 
+/** Datos del "Pedido rápido" que se arma desde la página principal (sin mesa). */
+export interface DatosPedidoRapido {
+  nombre: string;
+  telefono: string;
+  tipoEntrega: "domicilio" | "recoger";
+  direccion?: string;
+  observaciones?: string;
+}
+
 export type EstadoPedido =
   | "nuevo"
   | "aceptado"
