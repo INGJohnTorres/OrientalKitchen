@@ -14,6 +14,7 @@ import {
   RotateCcw,
   ImagePlus,
   AlertTriangle,
+  CheckCircle2,
 } from "lucide-react";
 import {
   obtenerCategorias,
@@ -22,6 +23,7 @@ import {
   eliminarProducto,
   restablecerCatalogo,
   exportarCatalogoJSON,
+  modoBackend,
 } from "@/lib/api";
 import { comprimirImagen } from "@/lib/image-utils";
 import { Categoria, Etiqueta, Producto, Variante } from "@/lib/types";
@@ -138,30 +140,45 @@ export default function EditorProductos() {
           <h1 className="font-display text-xl font-semibold">Editor de Productos</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={descargarExport}
-            className="flex items-center gap-1.5 rounded-full border border-espresso/20 px-3 py-2 text-xs font-medium dark:border-cream/20"
-          >
-            <Download size={14} /> Exportar catálogo
-          </button>
-          <button
-            onClick={restablecer}
-            className="flex items-center gap-1.5 rounded-full border border-espresso/20 px-3 py-2 text-xs font-medium text-ember-dark dark:border-cream/20 dark:text-ember"
-          >
-            <RotateCcw size={14} /> Restablecer
-          </button>
+          {!modoBackend() && (
+            <>
+              <button
+                onClick={descargarExport}
+                className="flex items-center gap-1.5 rounded-full border border-espresso/20 px-3 py-2 text-xs font-medium dark:border-cream/20"
+              >
+                <Download size={14} /> Exportar catálogo
+              </button>
+              <button
+                onClick={restablecer}
+                className="flex items-center gap-1.5 rounded-full border border-espresso/20 px-3 py-2 text-xs font-medium text-ember-dark dark:border-cream/20 dark:text-ember"
+              >
+                <RotateCcw size={14} /> Restablecer
+              </button>
+            </>
+          )}
         </div>
       </header>
 
-      <div className="mx-4 mt-4 flex gap-3 rounded-xl border border-mustard/40 bg-mustard/10 p-4 text-sm">
-        <AlertTriangle size={18} className="mt-0.5 shrink-0 text-mustard" />
-        <p>
-          <strong>Importante:</strong> estos cambios se guardan solo en este navegador. Un cliente que
-          escanea el QR desde su celular todavía no los ve — eso requiere conectar el backend. Mientras
-          tanto, usa <strong>Exportar catálogo</strong> y envíame ese archivo para hacer el cambio
-          permanente para todos.
-        </p>
-      </div>
+      {modoBackend() ? (
+        <div className="mx-4 mt-4 flex gap-3 rounded-xl border border-olive/40 bg-olive/10 p-4 text-sm">
+          <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-olive" />
+          <p>
+            <strong>Backend conectado:</strong> estos cambios se guardan directo en la base de datos
+            real — se ven de inmediato para cualquier cliente que escanee el QR, sin que tengas que
+            exportar ni avisarme nada.
+          </p>
+        </div>
+      ) : (
+        <div className="mx-4 mt-4 flex gap-3 rounded-xl border border-mustard/40 bg-mustard/10 p-4 text-sm">
+          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-mustard" />
+          <p>
+            <strong>Importante:</strong> estos cambios se guardan solo en este navegador. Un cliente que
+            escanea el QR desde su celular todavía no los ve — eso requiere conectar el backend. Mientras
+            tanto, usa <strong>Exportar catálogo</strong> y envíame ese archivo para hacer el cambio
+            permanente para todos.
+          </p>
+        </div>
+      )}
 
       <div className="mx-4 mt-4 flex flex-col gap-3">
         {categorias.map((cat) => {

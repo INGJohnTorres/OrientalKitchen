@@ -23,7 +23,7 @@ const CLAVE_TOKEN = "admin-token";
  * que tocar ningún otro archivo — este switch es automático.
  * ============================================================================
  */
-function modoBackend(): boolean {
+export function modoBackend(): boolean {
   return !!API_URL;
 }
 
