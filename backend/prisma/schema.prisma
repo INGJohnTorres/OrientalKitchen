@@ -10,7 +10,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Supabase da dos cadenas de conexión: DATABASE_URL (pooler/pgbouncer,
+  // puerto 6543, la usa la app en runtime) y DIRECT_URL (conexión directa,
+  // puerto 5432, la necesita Prisma para correr migraciones — el pooler no
+  // soporta las sesiones prolongadas que usa "prisma migrate deploy").
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Categoria {
