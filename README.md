@@ -23,7 +23,7 @@ restaurant-app/
 - Envío automático del pedido por **WhatsApp** con el mensaje formateado tal como lo pediste.
 - Lectura automática del número de mesa desde la URL: `/menu?mesa=8`.
 - Modo oscuro, diseño responsive, animaciones suaves.
-- Panel de administración (`/admin`) con login y tablero de pedidos en tiempo real (vía localStorage en esta versión demo — se conecta al backend real cambiando `lib/api.ts`).
+- Panel de administración (`/admin`) con login y tablero de pedidos: en modo demo vive en localStorage, en producción habla con el backend real solo con definir `NEXT_PUBLIC_API_URL` (sin tocar código, ver sección 4).
 
 **Backend (código completo de referencia, para conectar cuando quieras persistencia real):**
 - API REST con Express + TypeScript.
@@ -32,7 +32,7 @@ restaurant-app/
 - Rutas documentadas para productos, categorías, pedidos y auth.
 - Envío de correo con Nodemailer (opción 3 de envío de pedido).
 
-> Nota honesta: no puedo levantar un servidor Postgres real ni desplegar a Railway/Render/Vercel desde este entorno de chat (no tengo acceso a esas plataformas ni a red para instalar paquetes de terceros). Lo que sí está 100% hecho es el código: el backend completo (Express + Prisma + Postgres) y la conexión automática desde el frontend (`lib/api.ts` cambia de modo demo a modo backend con una sola variable de entorno, sin tocar código). Lo único que falta es la parte de infraestructura — crear las cuentas y darle "deploy" — que tienes que hacer tú (o yo puedo guiarte paso a paso). Si prefieres que alguien más "avanzado" que yo en este momento lo instale y verifique en vivo por ti, **Claude Code** (la app de escritorio/terminal) puede instalar dependencias, levantar Postgres localmente y probar todo de punta a punta.
+> Estado actual: ya está desplegado y en producción — frontend en Vercel, backend en Render, base de datos Postgres en Supabase. La cuenta/proyecto en cada plataforma la tiene que crear el dueño del sitio (no algo que se pueda automatizar desde acá), pero una vez creada, Claude Code sí puede correr las migraciones, sembrar el menú y verificar el login en vivo directamente contra la base real.
 
 ---
 
@@ -70,9 +70,20 @@ npm run dev
 Variables de entorno (`backend/.env`):
 
 ```env
+# Con Supabase: DATABASE_URL es la cadena de "Connection pooling" (puerto
+# 6543, con ?pgbouncer=true) y DIRECT_URL es la de "Direct connection"
+# (puerto 5432) — ambas salen del botón "Connect" del proyecto en Supabase,
+# pestaña ORM → Prisma. Con un Postgres normal (local, Railway, Render),
+# usa la misma cadena en las dos variables.
 DATABASE_URL="postgresql://usuario:password@localhost:5432/restaurante"
+DIRECT_URL="postgresql://usuario:password@localhost:5432/restaurante"
 JWT_SECRET="cambia-esto-por-un-secreto-largo-y-aleatorio"
 PORT=4000
+# Debe incluir el protocolo (https://) y no tener espacios/saltos de línea —
+# el middleware cors() compara este valor tal cual contra el header Origin.
+# Un valor mal escrito aquí rompe el login del panel admin sin dar más pistas
+# que "Failed to fetch" en la consola del navegador.
+CORS_ORIGIN="http://localhost:3000"
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=tu-correo@gmail.com
@@ -101,7 +112,7 @@ La API queda disponible en `http://localhost:4000/api`. Endpoints principales:
 **Ya está hecho — no hay que tocar ningún código.** `frontend/lib/api.ts` detecta automáticamente si `NEXT_PUBLIC_API_URL` está definida:
 
 - **Sin esa variable** → todo funciona en modo demo (localStorage del navegador), como hasta ahora.
-- **Con esa variable** (ej. `NEXT_PUBLIC_API_URL=https://tu-backend.up.railway.app/api`) → el menú, el carrito, el login admin, el editor de productos y los pedidos empiezan a hablar con la API real / Postgres automáticamente.
+- **Con esa variable** (ej. `NEXT_PUBLIC_API_URL=https://oriental-kitchen-backend.onrender.com/api`) → el menú, el carrito, el login admin, el editor de productos y los pedidos empiezan a hablar con la API real / Postgres automáticamente.
 
 Solo tienes que:
 1. Desplegar `backend/` (ver sección 6).
@@ -134,17 +145,18 @@ El número de mesa se guarda automáticamente en el carrito y viaja en el mensaj
 3. Configura las variables de entorno del paso 2 en el panel de Vercel.
 4. Deploy.
 
-**Backend → Railway o Render**
-1. Sube `backend/` a un repo de GitHub.
-2. Crea un servicio nuevo en Railway/Render apuntando a ese repo.
-3. Agrega un servicio de PostgreSQL (Railway y Render lo ofrecen con un clic) y copia la `DATABASE_URL` generada a las variables de entorno.
-4. Agrega también `JWT_SECRET` (cualquier cadena larga aleatoria) y `CORS_ORIGIN` (la URL de tu frontend en Vercel, ej. `https://oriental-kitchen.vercel.app`).
-5. Comando de build: `npm install && npx prisma generate && npx prisma migrate deploy`.
-6. Comando de start: `npm run start`.
-7. **Siembra el menú real**: una vez desplegado, corre una vez `npx prisma db seed` (Railway/Render permiten ejecutar un comando puntual desde su panel, o hazlo localmente apuntando tu `DATABASE_URL` de producción). Esto carga las 51 categorías/productos reales de Oriental Kitchen desde `prisma/seed-data.json` — incluidas las fotos, precios y variantes tal como están hoy en el menú. Es seguro correrlo más de una vez (usa upsert, no duplica nada).
-8. Copia la URL pública que te da Railway/Render (ej. `https://oriental-kitchen-backend.up.railway.app`) — esa + `/api` es tu `NEXT_PUBLIC_API_URL` para el paso 4.
+**Backend → Render**
+1. Sube `backend/` (y el `render.yaml` de la raíz del repo) a GitHub.
+2. En [render.com](https://render.com) → **New → Blueprint**, conecta el repo. Render detecta `render.yaml` automáticamente y crea el servicio `oriental-kitchen-backend` (build: `npm install && npm run build`, start: `npm start`, health check en `/api/salud`).
+3. Rellena las variables marcadas como secretas: `DATABASE_URL`, `DIRECT_URL` (ver sección de Postgres/Supabase abajo), `JWT_SECRET` (cualquier cadena larga aleatoria), `CORS_ORIGIN` (la URL de tu frontend en Vercel **con protocolo**, ej. `https://oriental-kitchen.vercel.app` — sin la `https://` o con espacios/saltos de línea de más, el login del panel admin falla con un simple "Failed to fetch" en consola, sin más pistas) y los `SMTP_*`/`RESTAURANT_EMAIL` si quieres el correo de notificación.
+4. `npm start` ya incluye `prisma migrate deploy` antes de arrancar, así que cada deploy aplica las migraciones pendientes solo.
+5. **Siembra el menú real**: la primera vez, corre `npx prisma db seed` apuntando a tu `DATABASE_URL`/`DIRECT_URL` de producción (puede ser desde tu máquina, sin necesidad del panel de Render). Esto carga las 11 categorías / 51 productos reales de Oriental Kitchen desde `prisma/seed-data.json` — incluidas las fotos, precios y variantes — y crea el usuario admin (`admin`/`admin123`, cámbiala apenas entres). Es seguro correrlo más de una vez (usa upsert, no duplica nada).
+6. Copia la URL pública que te da Render (ej. `https://oriental-kitchen-backend.onrender.com`) — esa + `/api` es tu `NEXT_PUBLIC_API_URL` para el paso anterior.
 
-**PostgreSQL**: usa la base gestionada de Railway/Render, o Supabase/Neon si prefieres.
+**PostgreSQL → Supabase**
+1. [supabase.com](https://supabase.com) → **New project**, elige nombre, contraseña de base de datos y región.
+2. En el dashboard del proyecto, botón **Connect** (arriba) → pestaña **ORM** → **Prisma**: ahí te da ya formateadas las dos cadenas que necesitas — `DATABASE_URL` (connection pooling, puerto 6543) y `DIRECT_URL` (conexión directa, puerto 5432). Prisma necesita las dos: la primera para las queries normales de la app, la segunda porque el pooler (pgbouncer) no soporta las sesiones prolongadas que usan las migraciones.
+3. Railway o cualquier otro Postgres gestionado también funciona — en ese caso usa la misma cadena para `DATABASE_URL` y `DIRECT_URL`.
 
 ---
 
@@ -159,6 +171,5 @@ El número de mesa se guarda automáticamente en el carrito y viaja en el mensaj
 
 ## 8. Siguientes pasos sugeridos
 
-- Conectar `lib/api.ts` al backend real.
 - Subir imágenes de productos a un bucket (S3/Cloudinary) en vez de URLs estáticas.
 - Agregar WebSockets (Socket.io) para que el panel admin reciba pedidos nuevos sin recargar — el backend ya expone un hook (`src/lib/socket.ts`) listo para activar.
