@@ -53,7 +53,7 @@ export default function CartDrawer({ onClose }: { onClose: () => void }) {
               <ArrowLeft size={18} />
             </button>
           ) : (
-            <span className="font-display text-lg font-semibold">Tu comanda</span>
+            <span className="font-display text-lg font-semibold">PEDIDO</span>
           )}
           <button onClick={onClose} className="grid h-9 w-9 place-items-center rounded-full hover:bg-espresso/10 dark:hover:bg-cream/10">
             <X size={18} />
