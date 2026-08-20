@@ -75,7 +75,7 @@ export default function AdminLoginPage() {
           Ingresar
         </button>
         <p className="mt-4 text-center text-xs text-cream/40">
-          Demo (sin backend conectado): admin / admin123
+          Acceso restringido — solo personal autorizado.
         </p>
       </form>
     </main>
