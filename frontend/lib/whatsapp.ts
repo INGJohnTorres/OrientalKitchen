@@ -156,9 +156,13 @@ export function construirMensajePedidoRapido(
     }
     mensaje += `\n`;
   } else {
-    const metodo = datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi";
     mensaje += `Entrega: Recoger en el local\n`;
-    mensaje += `Pago: ${metodo} — cliente confirma que ya realizó la transferencia (adjunta comprobante en este chat)\n\n`;
+    if (datos.metodoPago === "efectivo") {
+      mensaje += `Pago: Efectivo — el cliente paga al recoger su pedido en el local\n\n`;
+    } else {
+      const metodo = datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi";
+      mensaje += `Pago: ${metodo} — cliente confirma que ya realizó la transferencia (adjunta comprobante en este chat)\n\n`;
+    }
   }
 
   mensaje += `Pedido:\n${lineasPedido}\n\n`;

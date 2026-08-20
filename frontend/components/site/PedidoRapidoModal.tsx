@@ -99,6 +99,8 @@ export default function PedidoRapidoModal() {
         ? `Domicilio: ${datos.ubicacion?.direccion ?? "(ver ubicación en WhatsApp)"}${
             datos.detalleDireccion ? ` — ${datos.detalleDireccion}` : ""
           }`
+        : datos.metodoPago === "efectivo"
+        ? `Recoger en el local — pago en efectivo al recoger`
         : `Recoger en el local — pago por ${datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} (verificar comprobante)`;
     crearPedido(
       {
@@ -204,7 +206,7 @@ export default function PedidoRapidoModal() {
                   className="flex w-full items-center justify-between rounded-full bg-ember px-5 py-3.5 font-semibold text-cream shadow-lg shadow-ember/30 transition hover:bg-ember-dark"
                 >
                   <span className="flex items-center gap-2">
-                    <ShoppingBag size={18} /> Ver comanda ({cantidadTotal()})
+                    <ShoppingBag size={18} /> Ver PEDIDO ({cantidadTotal()})
                   </span>
                   <span className="font-mono">{formatoMoneda(total())}</span>
                 </button>
@@ -349,10 +351,15 @@ export default function PedidoRapidoModal() {
             )}
 
             {datos.tipoEntrega === "recoger" && (
-              <p className="rounded-lg bg-mustard/10 px-3 py-2.5 text-xs text-mustard">
-                Para recoger en el local, en el siguiente paso te pedimos confirmar el pago por
-                adelantado (Nequi o Daviplata).
-              </p>
+              <div className="flex flex-col gap-2">
+                <p className="rounded-lg bg-mustard/10 px-3 py-2.5 text-xs text-mustard">
+                  Para recoger en el local, en el siguiente paso eliges cómo pagar: por adelantado
+                  (Nequi o Daviplata) o en efectivo al recoger tu pedido.
+                </p>
+                <p className="rounded-lg bg-espresso/5 px-3 py-2.5 text-xs text-espresso/60 dark:bg-cream/5 dark:text-cream/60">
+                  ⏱️ Tiempo estimado de alistamiento: 15 a 30 min.
+                </p>
+              </div>
             )}
 
             <label className="flex flex-col gap-1 text-sm">
@@ -378,16 +385,14 @@ export default function PedidoRapidoModal() {
         {paso === "pago" && (
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 pt-2">
             <p className="text-sm text-espresso/70 dark:text-cream/70">
-              Para recoger en el local, primero necesitamos confirmar el pago. Transfiere el total
-              de tu pedido a una de estas cuentas y adjunta el comprobante en el chat de WhatsApp
-              cuando lo enviemos.
+              Para recoger en el local, elige cómo quieres pagar tu pedido.
             </p>
 
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setDatos({ ...datos, metodoPago: "nequi" })}
-                className={`flex-1 rounded-full border px-4 py-2.5 text-sm font-medium transition ${
+                onClick={() => setDatos({ ...datos, metodoPago: "nequi", pagoConfirmado: false })}
+                className={`flex-1 rounded-full border px-3 py-2.5 text-sm font-medium transition ${
                   datos.metodoPago === "nequi"
                     ? "border-ember bg-ember text-cream"
                     : "border-espresso/20 text-espresso/70 dark:border-cream/20 dark:text-cream/70"
@@ -397,8 +402,8 @@ export default function PedidoRapidoModal() {
               </button>
               <button
                 type="button"
-                onClick={() => setDatos({ ...datos, metodoPago: "daviplata" })}
-                className={`flex-1 rounded-full border px-4 py-2.5 text-sm font-medium transition ${
+                onClick={() => setDatos({ ...datos, metodoPago: "daviplata", pagoConfirmado: false })}
+                className={`flex-1 rounded-full border px-3 py-2.5 text-sm font-medium transition ${
                   datos.metodoPago === "daviplata"
                     ? "border-ember bg-ember text-cream"
                     : "border-espresso/20 text-espresso/70 dark:border-cream/20 dark:text-cream/70"
@@ -406,52 +411,86 @@ export default function PedidoRapidoModal() {
               >
                 Daviplata
               </button>
-            </div>
-
-            <div className="flex items-center justify-between rounded-xl border border-dashed border-mustard/50 bg-mustard/10 px-4 py-3.5">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-mustard">
-                  {datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} de Oriental Kitchen
-                </p>
-                <p className="font-mono text-lg font-semibold">
-                  {datos.metodoPago === "daviplata" ? cuentasPago.daviplata : cuentasPago.nequi}
-                </p>
-              </div>
               <button
                 type="button"
-                onClick={() =>
-                  navigator.clipboard?.writeText(
-                    datos.metodoPago === "daviplata" ? cuentasPago.daviplata : cuentasPago.nequi
-                  )
-                }
-                aria-label="Copiar número"
-                className="grid h-9 w-9 place-items-center rounded-full bg-espresso/10 text-espresso/70 dark:bg-cream/10 dark:text-cream/70"
+                onClick={() => setDatos({ ...datos, metodoPago: "efectivo", pagoConfirmado: false })}
+                className={`flex-1 rounded-full border px-3 py-2.5 text-sm font-medium transition ${
+                  datos.metodoPago === "efectivo"
+                    ? "border-ember bg-ember text-cream"
+                    : "border-espresso/20 text-espresso/70 dark:border-cream/20 dark:text-cream/70"
+                }`}
               >
-                <Copy size={15} />
+                💵 Efectivo
               </button>
             </div>
 
-            <p className="rounded-lg bg-espresso/5 px-3 py-2.5 text-xs text-espresso/60 dark:bg-cream/5 dark:text-cream/60">
-              Total a transferir: <span className="font-mono font-semibold">{formatoMoneda(total())}</span>
-            </p>
+            {datos.metodoPago === "efectivo" ? (
+              <>
+                <p className="rounded-lg bg-espresso/5 px-3 py-2.5 text-xs text-espresso/60 dark:bg-cream/5 dark:text-cream/60">
+                  Pagarás en efectivo directamente en el local al recoger tu pedido. Total a pagar:{" "}
+                  <span className="font-mono font-semibold">{formatoMoneda(total())}</span>
+                </p>
 
-            <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-espresso/15 px-3 py-3 text-sm dark:border-cream/15">
-              <input
-                type="checkbox"
-                checked={datos.pagoConfirmado}
-                onChange={(e) => setDatos({ ...datos, pagoConfirmado: e.target.checked })}
-                className="mt-0.5 h-4 w-4 accent-ember"
-              />
-              Ya realicé la transferencia y voy a enviar el comprobante por este chat de WhatsApp.
-            </label>
+                <button
+                  onClick={() => setPaso("confirmacion")}
+                  className="flex items-center justify-center gap-2 rounded-full bg-ember py-3 font-semibold text-cream transition hover:bg-ember-dark"
+                >
+                  <CheckCircle2 size={18} /> Continuar
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-espresso/70 dark:text-cream/70">
+                  Transfiere el total de tu pedido a esta cuenta y adjunta el comprobante en el
+                  chat de WhatsApp cuando lo enviemos.
+                </p>
 
-            <button
-              disabled={!datos.pagoConfirmado}
-              onClick={() => setPaso("confirmacion")}
-              className="flex items-center justify-center gap-2 rounded-full bg-ember py-3 font-semibold text-cream transition hover:bg-ember-dark disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <CheckCircle2 size={18} /> Continuar
-            </button>
+                <div className="flex items-center justify-between rounded-xl border border-dashed border-mustard/50 bg-mustard/10 px-4 py-3.5">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-mustard">
+                      {datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} de Oriental Kitchen
+                    </p>
+                    <p className="font-mono text-lg font-semibold">
+                      {datos.metodoPago === "daviplata" ? cuentasPago.daviplata : cuentasPago.nequi}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigator.clipboard?.writeText(
+                        datos.metodoPago === "daviplata" ? cuentasPago.daviplata : cuentasPago.nequi
+                      )
+                    }
+                    aria-label="Copiar número"
+                    className="grid h-9 w-9 place-items-center rounded-full bg-espresso/10 text-espresso/70 dark:bg-cream/10 dark:text-cream/70"
+                  >
+                    <Copy size={15} />
+                  </button>
+                </div>
+
+                <p className="rounded-lg bg-espresso/5 px-3 py-2.5 text-xs text-espresso/60 dark:bg-cream/5 dark:text-cream/60">
+                  Total a transferir: <span className="font-mono font-semibold">{formatoMoneda(total())}</span>
+                </p>
+
+                <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-espresso/15 px-3 py-3 text-sm dark:border-cream/15">
+                  <input
+                    type="checkbox"
+                    checked={datos.pagoConfirmado}
+                    onChange={(e) => setDatos({ ...datos, pagoConfirmado: e.target.checked })}
+                    className="mt-0.5 h-4 w-4 accent-ember"
+                  />
+                  Ya realicé la transferencia y voy a enviar el comprobante por este chat de WhatsApp.
+                </label>
+
+                <button
+                  disabled={!datos.pagoConfirmado}
+                  onClick={() => setPaso("confirmacion")}
+                  className="flex items-center justify-center gap-2 rounded-full bg-ember py-3 font-semibold text-cream transition hover:bg-ember-dark disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <CheckCircle2 size={18} /> Continuar
+                </button>
+              </>
+            )}
           </div>
         )}
 
@@ -470,9 +509,14 @@ export default function PedidoRapidoModal() {
                   {datos.detalleDireccion && <p>Detalle: {datos.detalleDireccion}</p>}
                 </>
               ) : (
-                <p>
-                  Recoger en el local — pago por {datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} ✓
-                </p>
+                <>
+                  <p>
+                    {datos.metodoPago === "efectivo"
+                      ? "Recoger en el local — pago en efectivo al recoger"
+                      : `Recoger en el local — pago por ${datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} ✓`}
+                  </p>
+                  <p>Tiempo estimado: 15 a 30 min</p>
+                </>
               )}
               <div className="my-2 border-t border-dashed border-espresso/20 dark:border-cream/20" />
               {items.map((item) => (
@@ -507,7 +551,7 @@ export default function PedidoRapidoModal() {
             </div>
             <p className="font-display text-xl font-semibold">¡Pedido enviado!</p>
             <p className="max-w-xs text-sm text-espresso/60 dark:text-cream/60">
-              Se abrió WhatsApp con tu comanda lista para enviar al restaurante. En breve la confirmarán.
+              Se abrió WhatsApp con tu PEDIDO listo para enviar al restaurante. En breve lo confirmarán.
             </p>
             <button onClick={cerrarYReiniciar} className="mt-2 rounded-full bg-ember px-6 py-2.5 font-semibold text-cream">
               Cerrar

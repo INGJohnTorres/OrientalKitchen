@@ -57,8 +57,8 @@ export interface DatosPedidoRapido {
   ubicacion?: { lat: number; lng: number; direccion: string };
   /** Detalles extra de la dirección (apto, torre, indicaciones) — opcional. */
   detalleDireccion?: string;
-  /** Método elegido para pagar por adelantado (solo para "recoger"). */
-  metodoPago?: "nequi" | "daviplata";
+  /** Método elegido para pagar (solo para "recoger"). "efectivo" se paga al recoger, sin adelanto. */
+  metodoPago?: "nequi" | "daviplata" | "efectivo";
   pagoConfirmado?: boolean;
   observaciones?: string;
 }
