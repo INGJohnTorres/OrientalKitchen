@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarRange, DollarSign, ClipboardList, Loader2, X } from "lucide-react";
+import { CalendarRange, DollarSign, ClipboardList, Loader2, X, Check } from "lucide-react";
 import { obtenerEstadisticas, eliminarPedido } from "@/lib/api";
 import { Estadisticas, TipoPedido } from "@/lib/types";
 
@@ -35,6 +35,7 @@ export default function EstadisticasVentas() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [borrandoId, setBorrandoId] = useState<string | null>(null);
+  const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
 
   const rangoInvalido = desde > hasta || diasEntre(desde, hasta) > MAX_DIAS_RANGO;
 
@@ -52,8 +53,7 @@ export default function EstadisticasVentas() {
     }
   }
 
-  async function borrarPedido(id: string, numero: number) {
-    if (!window.confirm(`¿Borrar el pedido #${numero}? Esta acción no se puede deshacer.`)) return;
+  async function borrarPedido(id: string) {
     setBorrandoId(id);
     try {
       await eliminarPedido(id);
@@ -62,6 +62,7 @@ export default function EstadisticasVentas() {
       setError(err instanceof Error ? err.message : "No se pudo borrar el pedido.");
     } finally {
       setBorrandoId(null);
+      setConfirmandoId(null);
     }
   }
 
@@ -171,15 +172,37 @@ export default function EstadisticasVentas() {
                           className="flex items-center gap-1 rounded-full bg-espresso/5 py-0.5 pl-2 pr-1 font-mono text-[11px] text-espresso/60 dark:bg-cream/10 dark:text-cream/60"
                         >
                           #{p.numero}
-                          <button
-                            type="button"
-                            onClick={() => borrarPedido(p.id, p.numero)}
-                            disabled={borrandoId === p.id}
-                            aria-label={`Borrar pedido #${p.numero}`}
-                            className="grid h-3.5 w-3.5 place-items-center rounded-full text-espresso/40 hover:bg-ember/20 hover:text-ember disabled:opacity-40 dark:text-cream/40"
-                          >
-                            <X size={10} />
-                          </button>
+                          {confirmandoId === p.id ? (
+                            <>
+                              <span className="text-ember">¿Borrar?</span>
+                              <button
+                                type="button"
+                                onClick={() => borrarPedido(p.id)}
+                                disabled={borrandoId === p.id}
+                                aria-label={`Confirmar borrar pedido #${p.numero}`}
+                                className="grid h-3.5 w-3.5 place-items-center rounded-full text-ember hover:bg-ember/20 disabled:opacity-40"
+                              >
+                                <Check size={10} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmandoId(null)}
+                                aria-label="Cancelar"
+                                className="grid h-3.5 w-3.5 place-items-center rounded-full text-espresso/40 hover:bg-espresso/10 dark:text-cream/40"
+                              >
+                                <X size={10} />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmandoId(p.id)}
+                              aria-label={`Borrar pedido #${p.numero}`}
+                              className="grid h-3.5 w-3.5 place-items-center rounded-full text-espresso/40 hover:bg-ember/20 hover:text-ember dark:text-cream/40"
+                            >
+                              <X size={10} />
+                            </button>
+                          )}
                         </span>
                       ))}
                     </div>
