@@ -368,3 +368,18 @@ export async function actualizarEstadoPedido(id: string, estado: Pedido["estado"
   const actualizados = pedidos.map((p) => (p.id === id ? { ...p, estado } : p));
   localStorage.setItem("pedidos-restaurante", JSON.stringify(actualizados));
 }
+
+/** Borra un pedido (ej. mal digitado por error). Acción irreversible. */
+export async function eliminarPedido(id: string): Promise<void> {
+  if (modoBackend()) {
+    const res = await fetch(`${API_URL}/pedidos/${id}`, {
+      method: "DELETE",
+      headers: headersAuth(),
+    });
+    if (!res.ok) throw new Error("No se pudo borrar el pedido.");
+    return;
+  }
+  if (typeof window === "undefined") return;
+  const pedidos: Pedido[] = JSON.parse(localStorage.getItem("pedidos-restaurante") || "[]");
+  localStorage.setItem("pedidos-restaurante", JSON.stringify(pedidos.filter((p) => p.id !== id)));
+}

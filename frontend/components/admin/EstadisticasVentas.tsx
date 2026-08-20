@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarRange, DollarSign, ClipboardList, Loader2 } from "lucide-react";
-import { obtenerEstadisticas } from "@/lib/api";
+import { CalendarRange, DollarSign, ClipboardList, Loader2, X } from "lucide-react";
+import { obtenerEstadisticas, eliminarPedido } from "@/lib/api";
 import { Estadisticas, TipoPedido } from "@/lib/types";
 
 const MAX_DIAS_RANGO = 31;
@@ -34,6 +34,7 @@ export default function EstadisticasVentas() {
   const [datos, setDatos] = useState<Estadisticas | null>(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const [borrandoId, setBorrandoId] = useState<string | null>(null);
 
   const rangoInvalido = desde > hasta || diasEntre(desde, hasta) > MAX_DIAS_RANGO;
 
@@ -48,6 +49,19 @@ export default function EstadisticasVentas() {
       setDatos(null);
     } finally {
       setCargando(false);
+    }
+  }
+
+  async function borrarPedido(id: string, numero: number) {
+    if (!window.confirm(`¿Borrar el pedido #${numero}? Esta acción no se puede deshacer.`)) return;
+    setBorrandoId(id);
+    try {
+      await eliminarPedido(id);
+      await consultar();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo borrar el pedido.");
+    } finally {
+      setBorrandoId(null);
     }
   }
 
@@ -154,9 +168,18 @@ export default function EstadisticasVentas() {
                         <span
                           key={p.id}
                           title={`${p.cliente} — ${formatoMoneda(p.total)}`}
-                          className="rounded-full bg-espresso/5 px-2 py-0.5 font-mono text-[11px] text-espresso/60 dark:bg-cream/10 dark:text-cream/60"
+                          className="flex items-center gap-1 rounded-full bg-espresso/5 py-0.5 pl-2 pr-1 font-mono text-[11px] text-espresso/60 dark:bg-cream/10 dark:text-cream/60"
                         >
                           #{p.numero}
+                          <button
+                            type="button"
+                            onClick={() => borrarPedido(p.id, p.numero)}
+                            disabled={borrandoId === p.id}
+                            aria-label={`Borrar pedido #${p.numero}`}
+                            className="grid h-3.5 w-3.5 place-items-center rounded-full text-espresso/40 hover:bg-ember/20 hover:text-ember disabled:opacity-40 dark:text-cream/40"
+                          >
+                            <X size={10} />
+                          </button>
                         </span>
                       ))}
                     </div>

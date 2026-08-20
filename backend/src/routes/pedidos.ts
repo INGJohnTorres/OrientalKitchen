@@ -176,4 +176,12 @@ router.patch("/:id/estado", requiereAuth, asyncHandler(async (req, res) => {
   res.json(pedido);
 }));
 
+// DELETE /api/pedidos/:id — admin, borra un pedido mal digitado (ej. mesa
+// equivocada, pedido de prueba). Cascada automática sobre DetallePedido.
+router.delete("/:id", requiereAuth, asyncHandler(async (req, res) => {
+  const { count } = await prisma.pedido.deleteMany({ where: { id: req.params.id } });
+  if (count === 0) return res.status(404).json({ error: "Pedido no encontrado." });
+  res.status(204).send();
+}));
+
 export default router;
