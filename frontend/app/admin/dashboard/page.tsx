@@ -7,13 +7,17 @@ import { Bell, LogOut, DollarSign, ClipboardList, ChefHat, Package, Settings } f
 import { actualizarEstadoPedido, cerrarSesion as cerrarSesionApi, obtenerPedidos } from "@/lib/api";
 import { emojiParaProducto } from "@/lib/whatsapp";
 import { EstadoPedido, Pedido } from "@/lib/types";
+import { etiquetaTipoPedido } from "@/lib/pedido-utils";
+import EstadisticasVentas from "@/components/admin/EstadisticasVentas";
 import clsx from "clsx";
 
+// "entregado" se oculta del tablero a propósito: una vez un pedido se
+// entrega, deja de ser accionable aquí — su historial vive en las
+// estadísticas de ventas (sección de abajo), no en este tablero en vivo.
 const columnas: { estado: EstadoPedido; titulo: string }[] = [
   { estado: "nuevo", titulo: "Nuevos" },
   { estado: "preparando", titulo: "En preparación" },
   { estado: "listo", titulo: "Listos" },
-  { estado: "entregado", titulo: "Entregados" },
 ];
 
 function formatoMoneda(v: number) {
@@ -141,7 +145,11 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 px-6 pb-8 lg:grid-cols-4">
+      <div className="px-6 pb-8">
+        <EstadisticasVentas />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 px-6 pb-8 lg:grid-cols-3">
         {columnas.map((col) => (
           <div key={col.estado} className="flex flex-col gap-3">
             <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-espresso/60 dark:text-cream/60">
@@ -161,7 +169,7 @@ export default function AdminDashboard() {
                         {new Date(p.creadoEn).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
-                    <p>Mesa {p.mesa} — {p.cliente}</p>
+                    <p>{etiquetaTipoPedido(p)} — {p.cliente}</p>
                     <ul className="my-2 list-disc pl-4 text-espresso/70 dark:text-cream/70">
                       {p.items.map((i) => (
                         <li key={i.claveUnica}>{emojiParaProducto(i.nombre)} {i.cantidad} {i.nombre}</li>

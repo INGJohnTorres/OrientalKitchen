@@ -19,24 +19,44 @@ const itemSchema = z.object({
   cantidad: z.number().int().positive(),
 });
 
-const pedidoSchema = z.object({
-  mesa: z.string().min(1),
-  cliente: z.string().min(1),
-  telefono: z.string().optional(),
-  observaciones: z.string().optional(),
-  items: z.array(itemSchema).min(1),
-  total: z.number().int().nonnegative(),
-});
+// Mismas reglas que se aplican en los formularios del frontend (CartDrawer y
+// PedidoRapidoModal): se validan también aquí porque el POST es público y no
+// hay que confiar en que el cliente respete los `pattern`/filtros del <input>.
+const NOMBRE_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
+const TELEFONO_REGEX = /^\d{7,10}$/;
+const MESA_REGEX = /^\d{1,4}$/;
+
+const pedidoSchema = z
+  .object({
+    tipoPedido: z.enum(["mesa", "domicilio", "recoger"]).default("mesa"),
+    mesa: z.string().optional(),
+    cliente: z.string().min(1).regex(NOMBRE_REGEX, "El nombre solo puede contener letras."),
+    telefono: z.string().regex(TELEFONO_REGEX, "El teléfono solo puede contener números (7 a 10 dígitos)."),
+    observaciones: z.string().optional(),
+    items: z.array(itemSchema).min(1),
+    total: z.number().int().nonnegative(),
+  })
+  .refine((d) => d.tipoPedido !== "mesa" || (!!d.mesa && MESA_REGEX.test(d.mesa)), {
+    message: "El número de mesa es obligatorio y solo puede contener números.",
+    path: ["mesa"],
+  });
+
+function etiquetaTipoPedido(tipoPedido: string, mesa: string | null) {
+  if (tipoPedido === "domicilio") return "Domicilio";
+  if (tipoPedido === "recoger") return "Recoger en el local";
+  return `Mesa ${mesa}`;
+}
 
 // POST /api/pedidos — público, el cliente envía su pedido desde el menú
 router.post("/", asyncHandler(async (req, res) => {
   const parsed = pedidoSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
-  const { mesa, cliente, telefono, observaciones, items, total } = parsed.data;
+  const { tipoPedido, mesa, cliente, telefono, observaciones, items, total } = parsed.data;
 
   const pedido = await prisma.pedido.create({
     data: {
-      mesa,
+      tipoPedido,
+      mesa: tipoPedido === "mesa" ? mesa : null,
       cliente,
       telefono,
       observaciones,
@@ -57,7 +77,7 @@ router.post("/", asyncHandler(async (req, res) => {
 
   const resumen = pedido.items.map((i) => `${i.cantidad} x ${i.nombre}`).join("\n");
   enviarCorreoPedido(
-    `Mesa: ${mesa}\nCliente: ${cliente}\n\n${resumen}\n\nTotal: $${total}`
+    `${etiquetaTipoPedido(tipoPedido, mesa ?? null)}\nCliente: ${cliente}\n\n${resumen}\n\nTotal: $${total}`
   ).catch((err) => console.error("Error enviando correo:", err));
 
   // TODO: si activas socket.io (ver src/lib/socket.ts), emite aquí el evento
@@ -76,6 +96,68 @@ router.get("/", requiereAuth, asyncHandler(async (req, res) => {
     orderBy: { creadoEn: "desc" },
   });
   res.json(pedidos);
+}));
+
+const MAX_DIAS_RANGO = 31;
+
+const estadisticasQuerySchema = z.object({
+  desde: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha 'desde' inválida."),
+  hasta: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha 'hasta' inválida."),
+});
+
+// GET /api/pedidos/estadisticas — admin, ventas y pedidos por tipo/producto
+// en un rango de fechas (máximo un mes) para el dashboard.
+router.get("/estadisticas", requiereAuth, asyncHandler(async (req, res) => {
+  const parsed = estadisticasQuerySchema.safeParse(req.query);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const { desde, hasta } = parsed.data;
+
+  const inicio = new Date(`${desde}T00:00:00`);
+  const fin = new Date(`${hasta}T23:59:59.999`);
+
+  if (Number.isNaN(inicio.getTime()) || Number.isNaN(fin.getTime()) || inicio > fin) {
+    return res.status(400).json({ error: "Rango de fechas inválido." });
+  }
+  const dias = (fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24);
+  if (dias > MAX_DIAS_RANGO) {
+    return res.status(400).json({ error: `El rango no puede superar ${MAX_DIAS_RANGO} días.` });
+  }
+
+  const pedidos = await prisma.pedido.findMany({
+    where: { creadoEn: { gte: inicio, lte: fin }, estado: { not: "cancelado" } },
+    include: { items: true },
+    orderBy: { creadoEn: "desc" },
+  });
+
+  type Referencia = { id: string; numero: number; cliente: string; mesa: string | null; total: number; creadoEn: Date };
+  const porTipo: Record<string, { tipoPedido: string; cantidad: number; total: number; pedidos: Referencia[] }> = {
+    mesa: { tipoPedido: "mesa", cantidad: 0, total: 0, pedidos: [] },
+    domicilio: { tipoPedido: "domicilio", cantidad: 0, total: 0, pedidos: [] },
+    recoger: { tipoPedido: "recoger", cantidad: 0, total: 0, pedidos: [] },
+  };
+  const productos: Record<string, { nombre: string; cantidad: number; total: number }> = {};
+  let totalVentas = 0;
+
+  for (const p of pedidos) {
+    const grupo = porTipo[p.tipoPedido];
+    grupo.cantidad += 1;
+    grupo.total += p.total;
+    grupo.pedidos.push({ id: p.id, numero: p.numero, cliente: p.cliente, mesa: p.mesa, total: p.total, creadoEn: p.creadoEn });
+    totalVentas += p.total;
+    for (const item of p.items) {
+      if (!productos[item.nombre]) productos[item.nombre] = { nombre: item.nombre, cantidad: 0, total: 0 };
+      productos[item.nombre].cantidad += item.cantidad;
+      productos[item.nombre].total += item.cantidad * item.precioUnitario;
+    }
+  }
+
+  res.json({
+    rango: { desde, hasta },
+    totalVentas,
+    totalPedidos: pedidos.length,
+    porTipo: Object.values(porTipo),
+    productos: Object.values(productos).sort((a, b) => b.cantidad - a.cantidad),
+  });
 }));
 
 const estadoSchema = z.object({

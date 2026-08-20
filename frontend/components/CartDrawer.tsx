@@ -23,6 +23,7 @@ export default function CartDrawer({ onClose }: { onClose: () => void }) {
   const [paso, setPaso] = useState<Paso>("carrito");
   const [cliente, setCliente] = useState<DatosCliente>({
     nombre: "",
+    tipoPedido: "mesa",
     mesa: mesa || "",
     observaciones: "",
     telefono: "",
@@ -127,7 +128,9 @@ export default function CartDrawer({ onClose }: { onClose: () => void }) {
                 <input
                   required
                   value={cliente.nombre}
-                  onChange={(e) => setCliente({ ...cliente, nombre: e.target.value })}
+                  onChange={(e) =>
+                    setCliente({ ...cliente, nombre: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "") })
+                  }
                   className="rounded-lg border border-espresso/20 bg-transparent px-3 py-2 outline-none focus:border-ember dark:border-cream/20"
                   placeholder="Ej: Carlos"
                 />
@@ -136,8 +139,9 @@ export default function CartDrawer({ onClose }: { onClose: () => void }) {
                 Número de mesa
                 <input
                   required
+                  inputMode="numeric"
                   value={cliente.mesa}
-                  onChange={(e) => setCliente({ ...cliente, mesa: e.target.value })}
+                  onChange={(e) => setCliente({ ...cliente, mesa: e.target.value.replace(/\D/g, "").slice(0, 4) })}
                   className="rounded-lg border border-espresso/20 bg-transparent px-3 py-2 outline-none focus:border-ember dark:border-cream/20"
                   placeholder="Ej: 8"
                 />
@@ -153,10 +157,12 @@ export default function CartDrawer({ onClose }: { onClose: () => void }) {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                Teléfono (opcional)
+                Teléfono
                 <input
+                  required
+                  inputMode="numeric"
                   value={cliente.telefono}
-                  onChange={(e) => setCliente({ ...cliente, telefono: e.target.value })}
+                  onChange={(e) => setCliente({ ...cliente, telefono: e.target.value.replace(/\D/g, "").slice(0, 10) })}
                   className="rounded-lg border border-espresso/20 bg-transparent px-3 py-2 outline-none focus:border-ember dark:border-cream/20"
                   placeholder="Ej: 3001234567"
                 />
@@ -207,7 +213,7 @@ export default function CartDrawer({ onClose }: { onClose: () => void }) {
               </div>
               <p className="font-display text-xl font-semibold">¡Pedido enviado!</p>
               <p className="max-w-xs text-sm text-espresso/60 dark:text-cream/60">
-                Se abrió WhatsApp con tu comanda lista para enviar al restaurante. En breve la confirmarán.
+                Se abrió WhatsApp con tu PEDIDO listo para enviar al restaurante. En breve lo confirmarán.
               </p>
               <button onClick={onClose} className="mt-2 rounded-full bg-ember px-6 py-2.5 font-semibold text-cream">
                 Volver al menú

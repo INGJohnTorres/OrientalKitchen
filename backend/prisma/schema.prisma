@@ -56,10 +56,18 @@ enum EstadoPedido {
   cancelado
 }
 
+enum TipoPedido {
+  mesa
+  domicilio
+  recoger
+}
+
 model Pedido {
   id            String          @id @default(cuid())
   numero        Int             @default(autoincrement())
-  mesa          String
+  tipoPedido    TipoPedido      @default(mesa)
+  /// Solo aplica cuando tipoPedido = "mesa". Nulo para domicilio/recoger.
+  mesa          String?
   cliente       String
   telefono      String?
   observaciones String?

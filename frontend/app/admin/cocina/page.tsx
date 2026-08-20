@@ -6,6 +6,7 @@ import { Flame, Volume2, VolumeX } from "lucide-react";
 import { actualizarEstadoPedido, obtenerPedidos } from "@/lib/api";
 import { EstadoPedido, Pedido } from "@/lib/types";
 import { emojiParaProducto } from "@/lib/whatsapp";
+import { etiquetaTipoPedido } from "@/lib/pedido-utils";
 
 const columnas: { estado: EstadoPedido; titulo: string; color: string }[] = [
   { estado: "nuevo", titulo: "🆕 Nuevos", color: "border-ember" },
@@ -92,7 +93,7 @@ export default function VistaCocina() {
                 {pedidosCol.map((p) => (
                   <div key={p.id} className={`rounded-2xl border-l-4 ${col.color} bg-cocoa/70 p-5 shadow-lg`}>
                     <div className="mb-2 flex items-center justify-between">
-                      <span className="font-mono text-2xl font-bold">Mesa {p.mesa}</span>
+                      <span className="font-mono text-2xl font-bold">{etiquetaTipoPedido(p)}</span>
                       <span className="text-sm text-cream/50">
                         {new Date(p.creadoEn).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
                       </span>

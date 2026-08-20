@@ -1,5 +1,15 @@
 import { categorias as categoriasBase, productos as productosBase } from "./menu-data";
-import { Categoria, DatosCliente, ItemCarrito, Pedido, Producto } from "./types";
+import {
+  Categoria,
+  DatosCliente,
+  Estadisticas,
+  ItemCarrito,
+  Pedido,
+  ProductoVendido,
+  Producto,
+  ResumenPorTipo,
+  TipoPedido,
+} from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const CLAVE_CATALOGO = "catalogo-restaurante";
@@ -237,6 +247,7 @@ export async function crearPedido(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        tipoPedido: cliente.tipoPedido,
         mesa: cliente.mesa,
         cliente: cliente.nombre,
         telefono: cliente.telefono,
@@ -252,6 +263,7 @@ export async function crearPedido(
   const pedido: Pedido = {
     id: crypto.randomUUID(),
     numero: Math.floor(Math.random() * 9000) + 1000,
+    tipoPedido: cliente.tipoPedido,
     mesa: cliente.mesa,
     cliente: cliente.nombre,
     telefono: cliente.telefono,
@@ -278,6 +290,67 @@ export async function obtenerPedidos(): Promise<Pedido[]> {
   }
   if (typeof window === "undefined") return [];
   return JSON.parse(localStorage.getItem("pedidos-restaurante") || "[]");
+}
+
+/** Ventas y pedidos por tipo/producto en un rango de fechas (máximo 31 días), para el dashboard. */
+export async function obtenerEstadisticas(desde: string, hasta: string): Promise<Estadisticas> {
+  if (modoBackend()) {
+    const res = await fetch(`${API_URL}/pedidos/estadisticas?desde=${desde}&hasta=${hasta}`, {
+      headers: headersAuth(),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "No se pudieron cargar las estadísticas.");
+    }
+    return res.json();
+  }
+
+  // Modo demo: se calcula lo mismo en el navegador a partir de localStorage,
+  // para que el dashboard funcione igual sin backend conectado.
+  const pedidos: Pedido[] =
+    typeof window === "undefined" ? [] : JSON.parse(localStorage.getItem("pedidos-restaurante") || "[]");
+
+  const inicio = new Date(`${desde}T00:00:00`);
+  const fin = new Date(`${hasta}T23:59:59.999`);
+  const enRango = pedidos.filter((p) => {
+    const fecha = new Date(p.creadoEn);
+    return fecha >= inicio && fecha <= fin && p.estado !== "cancelado";
+  });
+
+  const tipos: TipoPedido[] = ["mesa", "domicilio", "recoger"];
+  const porTipoMap = Object.fromEntries(
+    tipos.map((t) => [t, { tipoPedido: t, cantidad: 0, total: 0, pedidos: [] } as ResumenPorTipo])
+  ) as Record<TipoPedido, ResumenPorTipo>;
+  const productosMap: Record<string, ProductoVendido> = {};
+  let totalVentas = 0;
+
+  for (const p of enRango) {
+    const grupo = porTipoMap[p.tipoPedido] ?? porTipoMap.mesa;
+    grupo.cantidad += 1;
+    grupo.total += p.total;
+    grupo.pedidos.push({
+      id: p.id,
+      numero: p.numero,
+      cliente: p.cliente,
+      mesa: p.mesa ?? null,
+      total: p.total,
+      creadoEn: p.creadoEn,
+    });
+    totalVentas += p.total;
+    for (const item of p.items) {
+      if (!productosMap[item.nombre]) productosMap[item.nombre] = { nombre: item.nombre, cantidad: 0, total: 0 };
+      productosMap[item.nombre].cantidad += item.cantidad;
+      productosMap[item.nombre].total += item.cantidad * item.precioUnitario;
+    }
+  }
+
+  return {
+    rango: { desde, hasta },
+    totalVentas,
+    totalPedidos: enRango.length,
+    porTipo: Object.values(porTipoMap),
+    productos: Object.values(productosMap).sort((a, b) => b.cantidad - a.cantidad),
+  };
 }
 
 export async function actualizarEstadoPedido(id: string, estado: Pedido["estado"]): Promise<void> {

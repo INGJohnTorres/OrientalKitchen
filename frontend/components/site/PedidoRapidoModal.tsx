@@ -92,8 +92,8 @@ export default function PedidoRapidoModal() {
     enviarPedidoRapidoPorWhatsApp(datos, items, total());
 
     // También lo guardamos para que aparezca en el panel admin / vista de
-    // cocina, igual que los pedidos de mesa. "mesa" se reutiliza para
-    // dejar claro que es un pedido web (domicilio/recoger), no de mesa.
+    // cocina, igual que los pedidos de mesa — con tipoPedido propio para que
+    // el panel distinga mesa/domicilio/recoger sin adivinar por texto.
     const entrega =
       datos.tipoEntrega === "domicilio"
         ? `Domicilio: ${datos.ubicacion?.direccion ?? "(ver ubicación en WhatsApp)"}${
@@ -105,7 +105,7 @@ export default function PedidoRapidoModal() {
     crearPedido(
       {
         nombre: datos.nombre,
-        mesa: datos.tipoEntrega === "domicilio" ? "🛵 Domicilio" : "🏠 Recoger",
+        tipoPedido: datos.tipoEntrega,
         telefono: datos.telefono,
         observaciones: [entrega, datos.observaciones].filter(Boolean).join(" — "),
       },
@@ -291,7 +291,9 @@ export default function PedidoRapidoModal() {
               <input
                 required
                 value={datos.nombre}
-                onChange={(e) => setDatos({ ...datos, nombre: e.target.value })}
+                onChange={(e) =>
+                  setDatos({ ...datos, nombre: e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "") })
+                }
                 className="rounded-lg border border-espresso/20 bg-transparent px-3 py-2 outline-none focus:border-ember dark:border-cream/20"
                 placeholder="Ej: Carlos"
               />
@@ -300,8 +302,9 @@ export default function PedidoRapidoModal() {
               Teléfono
               <input
                 required
+                inputMode="numeric"
                 value={datos.telefono}
-                onChange={(e) => setDatos({ ...datos, telefono: e.target.value })}
+                onChange={(e) => setDatos({ ...datos, telefono: e.target.value.replace(/\D/g, "").slice(0, 10) })}
                 className="rounded-lg border border-espresso/20 bg-transparent px-3 py-2 outline-none focus:border-ember dark:border-cream/20"
                 placeholder="Ej: 3001234567"
               />
