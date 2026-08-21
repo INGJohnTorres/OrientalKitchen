@@ -406,6 +406,20 @@ export async function eliminarPedido(id: string): Promise<void> {
   localStorage.setItem("pedidos-restaurante", JSON.stringify(pedidos.filter((p) => p.id !== id)));
 }
 
+/** Borra TODO el historial de pedidos (incluye lo que usan las estadísticas de ventas). Irreversible. */
+export async function eliminarTodosPedidos(): Promise<void> {
+  if (modoBackend()) {
+    const res = await fetch(`${API_URL}/pedidos`, {
+      method: "DELETE",
+      headers: headersAuth(),
+    });
+    if (!res.ok) throw new Error("No se pudo borrar el historial de pedidos.");
+    return;
+  }
+  if (typeof window === "undefined") return;
+  localStorage.setItem("pedidos-restaurante", "[]");
+}
+
 // ---------- Configuración del negocio (plan basico/medio/premium) ----------
 
 const CONFIG_DEMO_POR_DEFECTO: Configuracion = {

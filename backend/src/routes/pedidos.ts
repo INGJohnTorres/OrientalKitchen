@@ -198,4 +198,12 @@ router.delete("/:id", requiereAuth, asyncHandler(async (req, res) => {
   res.status(204).send();
 }));
 
+// DELETE /api/pedidos — admin, borra TODO el historial de pedidos (incluye
+// el que usan las estadísticas de ventas). Irreversible; pensado para
+// limpiar datos de prueba, no para uso rutinario.
+router.delete("/", requiereAuth, asyncHandler(async (_req, res) => {
+  const { count } = await prisma.pedido.deleteMany({});
+  res.json({ borrados: count });
+}));
+
 export default router;

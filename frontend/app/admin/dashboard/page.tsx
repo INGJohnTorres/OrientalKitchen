@@ -3,8 +3,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bell, LogOut, DollarSign, ClipboardList, ChefHat, Package, Settings, Lock, ShieldCheck } from "lucide-react";
-import { actualizarEstadoPedido, cerrarSesion as cerrarSesionApi, obtenerPedidos, obtenerConfiguracion, rolActual } from "@/lib/api";
+import { Bell, LogOut, DollarSign, ClipboardList, ChefHat, Package, Settings, Lock, ShieldCheck, RefreshCw, Trash2 } from "lucide-react";
+import {
+  actualizarEstadoPedido,
+  cerrarSesion as cerrarSesionApi,
+  obtenerPedidos,
+  obtenerConfiguracion,
+  rolActual,
+  eliminarTodosPedidos,
+} from "@/lib/api";
 import { emojiParaProducto } from "@/lib/whatsapp";
 import { EstadoPedido, Pedido, PlanNegocio } from "@/lib/types";
 import { etiquetaTipoPedido } from "@/lib/pedido-utils";
@@ -34,6 +41,11 @@ export default function AdminDashboard() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [pedidosNuevos, setPedidosNuevos] = useState(0);
   const [plan, setPlan] = useState<PlanNegocio | null>(null);
+  const [refrescando, setRefrescando] = useState(false);
+  const [mostrarBorrarTodo, setMostrarBorrarTodo] = useState(false);
+  const [textoConfirmacion, setTextoConfirmacion] = useState("");
+  const [borrandoTodo, setBorrandoTodo] = useState(false);
+  const [errorBorrado, setErrorBorrado] = useState("");
   const esSuperAdmin = rolActual() === "superadmin";
 
   useEffect(() => {
@@ -64,6 +76,28 @@ export default function AdminDashboard() {
     cargar();
   }
 
+  async function refrescar() {
+    setRefrescando(true);
+    await cargar();
+    setRefrescando(false);
+  }
+
+  async function borrarTodoElHistorial() {
+    if (textoConfirmacion.trim().toUpperCase() !== "BORRAR") return;
+    setBorrandoTodo(true);
+    setErrorBorrado("");
+    try {
+      await eliminarTodosPedidos();
+      setPedidos([]);
+      setMostrarBorrarTodo(false);
+      setTextoConfirmacion("");
+    } catch (err) {
+      setErrorBorrado(err instanceof Error ? err.message : "No se pudo borrar el historial.");
+    } finally {
+      setBorrandoTodo(false);
+    }
+  }
+
   function cerrarSesion() {
     sessionStorage.removeItem("admin-autenticado");
     cerrarSesionApi();
@@ -77,6 +111,9 @@ export default function AdminDashboard() {
   const ventasTotales = pedidos
     .filter((p) => p.estado !== "cancelado")
     .reduce((acc, p) => acc + p.total, 0);
+  const pedidosActivos = pedidos.filter((p) =>
+    ["nuevo", "preparando", "listo"].includes(p.estado)
+  ).length;
 
   const puedePedir = plan === null || permitePedidos(plan);
   const puedeVerEstadisticas = plan === null || permiteEstadisticas(plan);
@@ -159,11 +196,62 @@ export default function AdminDashboard() {
           <div className="grid h-10 w-10 place-items-center rounded-full bg-ember/20 text-ember">
             <ClipboardList size={18} />
           </div>
-          <div>
-            <p className="text-xs text-espresso/50 dark:text-cream/50">Pedidos totales</p>
-            <p className="font-mono text-lg font-semibold">{pedidos.length}</p>
+          <div className="flex-1">
+            <p className="text-xs text-espresso/50 dark:text-cream/50">Pedidos activos</p>
+            <p className="font-mono text-lg font-semibold">{pedidosActivos}</p>
           </div>
+          <button
+            onClick={refrescar}
+            aria-label="Refrescar pedidos"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-espresso/50 transition hover:bg-espresso/10 dark:text-cream/50 dark:hover:bg-cream/10"
+          >
+            <RefreshCw size={15} className={refrescando ? "animate-spin" : ""} />
+          </button>
         </div>
+      </div>
+
+      <div className="px-6 pb-4">
+        {!mostrarBorrarTodo ? (
+          <button
+            onClick={() => setMostrarBorrarTodo(true)}
+            className="flex items-center gap-1.5 text-xs text-espresso/40 hover:text-ember dark:text-cream/40"
+          >
+            <Trash2 size={13} /> Borrar todo el historial de pedidos
+          </button>
+        ) : (
+          <div className="flex flex-col gap-2 rounded-xl border border-dashed border-ember/40 bg-ember/5 p-4 text-sm">
+            <p className="text-ember">
+              Esto borra <strong>todos</strong> los pedidos (activos e historial de ventas) de forma
+              permanente. Escribe <strong>BORRAR</strong> para confirmar.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={textoConfirmacion}
+                onChange={(e) => setTextoConfirmacion(e.target.value)}
+                placeholder="BORRAR"
+                className="rounded-lg border border-ember/30 bg-transparent px-3 py-1.5 text-sm outline-none focus:border-ember"
+              />
+              <button
+                onClick={borrarTodoElHistorial}
+                disabled={textoConfirmacion.trim().toUpperCase() !== "BORRAR" || borrandoTodo}
+                className="rounded-full bg-ember px-4 py-1.5 text-xs font-semibold text-cream transition hover:bg-ember-dark disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Confirmar borrado
+              </button>
+              <button
+                onClick={() => {
+                  setMostrarBorrarTodo(false);
+                  setTextoConfirmacion("");
+                  setErrorBorrado("");
+                }}
+                className="rounded-full border border-espresso/20 px-4 py-1.5 text-xs font-medium text-espresso/60 dark:border-cream/20 dark:text-cream/60"
+              >
+                Cancelar
+              </button>
+            </div>
+            {errorBorrado && <p className="text-xs text-ember">{errorBorrado}</p>}
+          </div>
+        )}
       </div>
 
       <div className="px-6 pb-8">
