@@ -7,6 +7,7 @@ import { ArrowUpRight } from "lucide-react";
 import clsx from "clsx";
 import { obtenerProductos } from "@/lib/api";
 import { Producto } from "@/lib/types";
+import { usePlan, permitePedidos } from "@/lib/plan";
 import Reveal from "./Reveal";
 
 function formatoMoneda(v: number) {
@@ -15,6 +16,8 @@ function formatoMoneda(v: number) {
 
 export default function Favoritos() {
   const [productos, setProductos] = useState<Producto[]>([]);
+  const plan = usePlan();
+  const puedePedir = plan === null || permitePedidos(plan);
 
   useEffect(() => {
     obtenerProductos().then((todos) => {
@@ -71,7 +74,7 @@ export default function Favoritos() {
                       {formatoMoneda(p.precio)}
                     </span>
                     <span className="flex items-center gap-1 text-sm font-semibold text-ember transition group-hover:gap-2">
-                      Pedir <ArrowUpRight size={15} />
+                      {puedePedir ? "Pedir" : "Ver"} <ArrowUpRight size={15} />
                     </span>
                   </div>
                 </div>

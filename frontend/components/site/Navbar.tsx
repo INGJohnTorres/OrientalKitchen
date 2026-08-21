@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, X, ShoppingBag } from "lucide-react";
+import { usePlan, permitePedidos } from "@/lib/plan";
 import clsx from "clsx";
 
 const ENLACES = [
@@ -17,6 +18,8 @@ const ENLACES = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [abierto, setAbierto] = useState(false);
+  const plan = usePlan();
+  const textoMenu = plan !== null && !permitePedidos(plan) ? "Ver menú" : "Pedir ahora";
 
   useEffect(() => {
     function onScroll() {
@@ -60,7 +63,7 @@ export default function Navbar() {
             href="/menu"
             className="flex items-center gap-1.5 rounded-full bg-ember px-5 py-2 text-sm font-semibold text-cream shadow-md shadow-ember/20 transition hover:scale-105 hover:bg-ember-dark"
           >
-            <ShoppingBag size={15} /> Pedir ahora
+            <ShoppingBag size={15} /> {textoMenu}
           </Link>
         </div>
 
@@ -111,7 +114,7 @@ export default function Navbar() {
             onClick={() => setAbierto(false)}
             className="mt-4 flex items-center gap-2 rounded-full bg-ember px-8 py-3.5 text-base font-semibold text-cream shadow-lg shadow-ember/30"
           >
-            <ShoppingBag size={18} /> Pedir ahora
+            <ShoppingBag size={18} /> {textoMenu}
           </Link>
         </div>
       </div>

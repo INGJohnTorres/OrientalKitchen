@@ -5,6 +5,7 @@ import { Minus, Plus, Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Producto } from "@/lib/types";
 import { useCartStore } from "@/lib/cart-store";
+import { usePlan, permitePedidos } from "@/lib/plan";
 import clsx from "clsx";
 
 const colorEtiqueta: Record<string, string> = {
@@ -27,6 +28,8 @@ export default function ProductCard({ producto }: { producto: Producto }) {
   const [varianteId, setVarianteId] = useState(producto.variantes?.[0]?.id ?? null);
   const agregar = useCartStore((s) => s.agregar);
   const [agregado, setAgregado] = useState(false);
+  const plan = usePlan();
+  const puedePedir = plan === null || permitePedidos(plan);
 
   const variante = useMemo(
     () => producto.variantes?.find((v) => v.id === varianteId) ?? null,
@@ -65,20 +68,22 @@ export default function ProductCard({ producto }: { producto: Producto }) {
         <span className="whitespace-nowrap font-mono text-sm font-semibold text-ember-dark dark:text-ember">
           {formatoMoneda(producto.precio)}
         </span>
-        <button
-          onClick={() =>
-            agregar({
-              claveUnica: `${producto.id}::base`,
-              productoId: producto.id,
-              nombre: producto.nombre,
-              precioUnitario: producto.precio,
-            })
-          }
-          aria-label="Agregar"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ember text-cream shadow-md shadow-ember/30 transition hover:bg-ember-dark active:scale-95"
-        >
-          <Plus size={16} />
-        </button>
+        {puedePedir && (
+          <button
+            onClick={() =>
+              agregar({
+                claveUnica: `${producto.id}::base`,
+                productoId: producto.id,
+                nombre: producto.nombre,
+                precioUnitario: producto.precio,
+              })
+            }
+            aria-label="Agregar"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ember text-cream shadow-md shadow-ember/30 transition hover:bg-ember-dark active:scale-95"
+          >
+            <Plus size={16} />
+          </button>
+        )}
       </div>
     );
   }
@@ -106,16 +111,18 @@ export default function ProductCard({ producto }: { producto: Producto }) {
           ))}
         </div>
 
-        <button
-          onClick={handleAgregar}
-          aria-label="Agregar"
-          className={clsx(
-            "absolute -bottom-4 right-3 grid h-10 w-10 place-items-center rounded-full text-cream shadow-lg shadow-ember/40 ring-4 ring-surface transition active:scale-90",
-            agregado ? "bg-olive" : "bg-ember hover:bg-ember-dark"
-          )}
-        >
-          {agregado ? <Check size={18} /> : <Plus size={18} />}
-        </button>
+        {puedePedir && (
+          <button
+            onClick={handleAgregar}
+            aria-label="Agregar"
+            className={clsx(
+              "absolute -bottom-4 right-3 grid h-10 w-10 place-items-center rounded-full text-cream shadow-lg shadow-ember/40 ring-4 ring-surface transition active:scale-90",
+              agregado ? "bg-olive" : "bg-ember hover:bg-ember-dark"
+            )}
+          >
+            {agregado ? <Check size={18} /> : <Plus size={18} />}
+          </button>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 p-4 pt-6">
@@ -148,23 +155,25 @@ export default function ProductCard({ producto }: { producto: Producto }) {
           <span className="whitespace-nowrap font-mono text-sm font-bold text-ember">
             {formatoMoneda(precioFinal)}
           </span>
-          <div className="flex items-center gap-1.5 rounded-full border border-cream/15 px-1 py-1">
-            <button
-              aria-label="Restar"
-              onClick={() => setCantidad((c) => Math.max(1, c - 1))}
-              className="grid h-6 w-6 place-items-center rounded-full text-cream/70 transition hover:bg-cream/10"
-            >
-              <Minus size={13} />
-            </button>
-            <span className="w-4 text-center font-mono text-xs text-cream">{cantidad}</span>
-            <button
-              aria-label="Sumar"
-              onClick={() => setCantidad((c) => c + 1)}
-              className="grid h-6 w-6 place-items-center rounded-full text-cream/70 transition hover:bg-cream/10"
-            >
-              <Plus size={13} />
-            </button>
-          </div>
+          {puedePedir && (
+            <div className="flex items-center gap-1.5 rounded-full border border-cream/15 px-1 py-1">
+              <button
+                aria-label="Restar"
+                onClick={() => setCantidad((c) => Math.max(1, c - 1))}
+                className="grid h-6 w-6 place-items-center rounded-full text-cream/70 transition hover:bg-cream/10"
+              >
+                <Minus size={13} />
+              </button>
+              <span className="w-4 text-center font-mono text-xs text-cream">{cantidad}</span>
+              <button
+                aria-label="Sumar"
+                onClick={() => setCantidad((c) => c + 1)}
+                className="grid h-6 w-6 place-items-center rounded-full text-cream/70 transition hover:bg-cream/10"
+              >
+                <Plus size={13} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
