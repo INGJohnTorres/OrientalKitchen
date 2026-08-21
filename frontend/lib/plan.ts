@@ -14,6 +14,11 @@ export function permiteEstadisticas(plan: PlanNegocio | null): boolean {
   return plan === "premium";
 }
 
+/** El editor de productos del menú es exclusivo del plan "premium". */
+export function permiteEditorProductos(plan: PlanNegocio | null): boolean {
+  return plan === "premium";
+}
+
 /**
  * Plan actual del negocio. Devuelve `null` mientras carga — los componentes
  * que gatean UI por esto deben tratar `null` como "no ocultar todavía" para

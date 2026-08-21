@@ -8,7 +8,7 @@ import { actualizarEstadoPedido, cerrarSesion as cerrarSesionApi, obtenerPedidos
 import { emojiParaProducto } from "@/lib/whatsapp";
 import { EstadoPedido, Pedido, PlanNegocio } from "@/lib/types";
 import { etiquetaTipoPedido } from "@/lib/pedido-utils";
-import { permitePedidos, permiteEstadisticas } from "@/lib/plan";
+import { permitePedidos, permiteEstadisticas, permiteEditorProductos } from "@/lib/plan";
 import EstadisticasVentas from "@/components/admin/EstadisticasVentas";
 import clsx from "clsx";
 
@@ -80,18 +80,21 @@ export default function AdminDashboard() {
 
   const puedePedir = plan === null || permitePedidos(plan);
   const puedeVerEstadisticas = plan === null || permiteEstadisticas(plan);
+  const puedeEditarProductos = plan === null || permiteEditorProductos(plan);
 
   return (
     <main className="min-h-screen bg-parchment dark:bg-espresso dark:text-cream">
       <header className="flex items-center justify-between border-b border-espresso/10 bg-white/60 px-6 py-4 dark:border-cream/10 dark:bg-cocoa/40">
         <h1 className="font-display text-xl font-semibold">Panel — Oriental Kitchen</h1>
         <div className="flex items-center gap-4">
-          <Link
-            href="/admin/productos"
-            className="flex items-center gap-1.5 rounded-full border border-espresso/20 px-4 py-2 text-sm font-medium transition hover:border-ember hover:text-ember dark:border-cream/20"
-          >
-            <Package size={16} /> Editar productos
-          </Link>
+          {puedeEditarProductos && (
+            <Link
+              href="/admin/productos"
+              className="flex items-center gap-1.5 rounded-full border border-espresso/20 px-4 py-2 text-sm font-medium transition hover:border-ember hover:text-ember dark:border-cream/20"
+            >
+              <Package size={16} /> Editar productos
+            </Link>
+          )}
           <Link
             href="/admin/configuracion"
             className="grid h-9 w-9 place-items-center rounded-full border border-espresso/20 transition hover:border-ember hover:text-ember dark:border-cream/20"

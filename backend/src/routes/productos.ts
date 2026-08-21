@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requiereAuth } from "../middleware/auth";
+import { requierePlanPremium } from "../middleware/plan";
 import { asyncHandler } from "../lib/async-handler";
 
 const router = Router();
@@ -41,13 +42,13 @@ router.get("/", asyncHandler(async (req, res) => {
 }));
 
 // GET /api/productos/todos — admin, incluye inactivos (para el editor de productos)
-router.get("/todos", requiereAuth, asyncHandler(async (_req, res) => {
+router.get("/todos", requiereAuth, requierePlanPremium, asyncHandler(async (_req, res) => {
   const productos = await prisma.producto.findMany({ orderBy: { creadoEn: "asc" } });
   res.json(productos);
 }));
 
 // POST /api/productos — admin (crear producto nuevo; usa el id enviado si viene, si no genera uno)
-router.post("/", requiereAuth, asyncHandler(async (req, res) => {
+router.post("/", requiereAuth, requierePlanPremium, asyncHandler(async (req, res) => {
   const parsed = productoSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const { id, ...resto } = parsed.data;
@@ -56,7 +57,7 @@ router.post("/", requiereAuth, asyncHandler(async (req, res) => {
 }));
 
 // PUT /api/productos/:id — admin (editar nombre/precio/foto/variantes/activo/etc.)
-router.put("/:id", requiereAuth, asyncHandler(async (req, res) => {
+router.put("/:id", requiereAuth, requierePlanPremium, asyncHandler(async (req, res) => {
   const parsed = productoSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const { id, ...resto } = parsed.data;
@@ -75,7 +76,7 @@ router.put("/:id", requiereAuth, asyncHandler(async (req, res) => {
 }));
 
 // DELETE /api/productos/:id — admin
-router.delete("/:id", requiereAuth, asyncHandler(async (req, res) => {
+router.delete("/:id", requiereAuth, requierePlanPremium, asyncHandler(async (req, res) => {
   await prisma.producto.delete({ where: { id: req.params.id } });
   res.status(204).send();
 }));

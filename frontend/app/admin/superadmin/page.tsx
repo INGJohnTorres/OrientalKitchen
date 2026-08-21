@@ -29,6 +29,8 @@ const PLANES: {
       "Menú digital por código QR",
       "Pedidos por WhatsApp (mesa, domicilio y recoger)",
       "Dashboard de estadísticas de ventas",
+      "Editor de productos del menú",
+      "Soporte prioritario",
     ],
   },
 ];

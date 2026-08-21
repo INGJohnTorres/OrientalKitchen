@@ -24,9 +24,11 @@ import {
   restablecerCatalogo,
   exportarCatalogoJSON,
   modoBackend,
+  obtenerConfiguracion,
 } from "@/lib/api";
 import { comprimirImagen } from "@/lib/image-utils";
 import { Categoria, Etiqueta, Producto, Variante } from "@/lib/types";
+import { permiteEditorProductos } from "@/lib/plan";
 
 const ETIQUETAS: Etiqueta[] = ["Nuevo", "Picante", "Vegetariano", "Promoción"];
 
@@ -50,6 +52,9 @@ export default function EditorProductos() {
       router.push("/admin");
       return;
     }
+    obtenerConfiguracion().then((c) => {
+      if (!permiteEditorProductos(c.plan)) router.push("/admin/dashboard");
+    });
     (async () => {
       setCategorias(await obtenerCategorias());
       setProductos(await obtenerProductosAdmin());
