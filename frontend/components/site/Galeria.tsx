@@ -85,9 +85,11 @@ export default function Galeria() {
                 {/* Degradado + nombre siempre visibles (no solo al pasar el mouse),
                     para que en celular — donde no hay hover — igual se sepa qué es cada foto. */}
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-espresso/90 via-espresso/10 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 p-3">
-                  <span className="text-sm font-medium text-cream drop-shadow">{producto.nombre}</span>
-                  <Expand size={15} className="shrink-0 text-cream/70 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3">
+                  <span className="min-w-0 truncate font-display text-sm leading-tight tracking-wide text-cream drop-shadow-md sm:text-base">
+                    {producto.nombre}
+                  </span>
+                  <Expand size={15} className="mb-0.5 shrink-0 text-cream/70 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 </div>
               </div>
             </Reveal>
