@@ -30,7 +30,7 @@ export default function Galeria() {
   // vez al cargar, para que cada visita muestre un orden distinto.
   useEffect(() => {
     obtenerProductos().then((productos) => {
-      setPool(barajar(productos.filter((p) => p.imagen)));
+      setPool(barajar(productos.filter((p) => p.imagen && p.categoriaId !== "bebidas")));
     });
   }, []);
 
