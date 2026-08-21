@@ -2,8 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { Yuji_Syuku } from "next/font/google";
 import { obtenerCategorias, obtenerProductos } from "@/lib/api";
 import { Categoria, Producto } from "@/lib/types";
+
+// Fuente del lettering "Oriental Kitchen" de la tarjeta de marca — caligrafía
+// oriental con serifas afiladas, elegida entre varias opciones probadas en
+// Lovable para acercarse al logo de referencia del negocio.
+const yujiSyuku = Yuji_Syuku({ weight: "400", subsets: ["latin"] });
 
 // Cuánto tiempo se queda cada plato en pantalla (ms). Suficiente para leer
 // nombre + descripción + precio con calma, sin sentirse eterno.
@@ -89,18 +95,61 @@ export default function PantallaFavoritos() {
   if (esBumper) {
     return (
       <main className="relative grid h-screen w-screen place-items-center overflow-hidden bg-espresso">
-        <Image
-          key="bumper"
-          src="/logo-favoritos.png"
-          alt="Oriental Kitchen"
-          width={1264}
-          height={713}
-          className="w-[42vw] max-w-2xl animate-[fadeIn_1s_ease-out]"
-          priority
-        />
+        <div key="bumper" className="flex flex-col items-center animate-[fadeIn_1s_ease-out]">
+          <span
+            className={`${yujiSyuku.className} ok-ink text-[10vw] leading-none sm:text-7xl lg:text-8xl`}
+            data-text="ORIENTAL KITCHEN"
+          >
+            <span className="ok-fill">ORIENTAL KITCHEN</span>
+          </span>
+
+          <div className="ok-rule my-4 w-2/3" />
+
+          <span
+            className={`${yujiSyuku.className} ok-ink ok-ink-thin italic text-[3.4vw] leading-none sm:text-2xl lg:text-3xl`}
+            data-text="Los expertos en arroz..."
+          >
+            <span className="ok-fill">Los expertos en arroz...</span>
+          </span>
+
+          <Image
+            src="/logo-mascota.png"
+            alt=""
+            width={1264}
+            height={448}
+            className="mt-2 w-[38vw] max-w-lg"
+            priority
+          />
+        </div>
         {barraProgreso}
         <style>{`
           @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+          .ok-ink { position: relative; display: inline-block; color: #2a1410; }
+          .ok-ink > .ok-fill {
+            position: relative;
+            z-index: 1;
+            color: transparent;
+            background-image: linear-gradient(to bottom, #e2574c 0%, #b3352c 48%, #7a1f1f 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+          }
+          .ok-ink::before {
+            content: attr(data-text);
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            color: #2a1410;
+            -webkit-text-stroke: 0.075em #c9a24b;
+            paint-order: stroke fill;
+            text-shadow: 0 1px 0 #6b5220, 0 2px 0 #4a3814, 0 3px 6px rgba(0,0,0,.7), 0 -1px 0 rgba(255,236,178,.45);
+          }
+          .ok-ink-thin::before { -webkit-text-stroke-width: 0.045em; }
+          .ok-rule {
+            height: 2px;
+            background: linear-gradient(to right, transparent, #c9a24b 18%, #f0dda0 50%, #c9a24b 82%, transparent);
+          }
+
           @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
         `}</style>
       </main>
