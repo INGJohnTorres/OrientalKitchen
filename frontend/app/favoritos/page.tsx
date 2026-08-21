@@ -8,6 +8,8 @@ import { Categoria, Producto } from "@/lib/types";
 // Cuánto tiempo se queda cada plato en pantalla (ms). Suficiente para leer
 // nombre + descripción + precio con calma, sin sentirse eterno.
 const DURACION_SLIDE_MS = 8000;
+// La tarjeta de marca es más corta: no hay texto que leer, solo una pausa.
+const DURACION_BUMPER_MS = 5000;
 
 const colorEtiqueta: Record<string, string> = {
   Nuevo: "bg-olive text-cream",
@@ -41,31 +43,76 @@ export default function PantallaFavoritos() {
       .sort((a, b) => (ordenCategoria.get(a.categoriaId) ?? 99) - (ordenCategoria.get(b.categoriaId) ?? 99));
   }, [productos, categorias]);
 
+  // Rotación con un slot extra al principio (índice 0) para la tarjeta de
+  // marca: slot 0 = logo grande, slots 1..N = platos. Así la vitrina abre
+  // con la marca y la repite cada vuelta completa del carrusel.
+  const totalSlots = platosVitrina.length > 0 ? platosVitrina.length + 1 : 0;
+  const esBumper = indice === 0;
+  const duracionActual = esBumper ? DURACION_BUMPER_MS : DURACION_SLIDE_MS;
+
   useEffect(() => {
-    if (platosVitrina.length === 0) return;
-    const intervalo = setInterval(() => {
-      setIndice((i) => (i + 1) % platosVitrina.length);
+    if (totalSlots === 0) return;
+    const timeout = setTimeout(() => {
+      setIndice((i) => (i + 1) % totalSlots);
       setProgresoKey((k) => k + 1);
-    }, DURACION_SLIDE_MS);
-    return () => clearInterval(intervalo);
-  }, [platosVitrina.length]);
+    }, duracionActual);
+    return () => clearTimeout(timeout);
+  }, [indice, totalSlots, duracionActual]);
 
-  const plato = platosVitrina[indice];
-  const categoria = categorias.find((c) => c.id === plato?.categoriaId);
-
-  if (!plato) {
+  if (totalSlots === 0) {
     return <main className="grid min-h-screen place-items-center bg-espresso text-cream/40">Cargando menú...</main>;
   }
 
+  // Logo, fijo sobre todo lo demás — no se muestra durante la tarjeta de
+  // marca (ya es el protagonista completo de esa pantalla).
+  const logoEsquina = !esBumper && (
+    <div className="absolute left-8 top-8 z-20">
+      <Image src="/logo-favoritos.png" alt="Oriental Kitchen" width={1264} height={713} className="h-16 w-auto drop-shadow-lg" priority />
+    </div>
+  );
+
+  const barraProgreso = (
+    <div className="absolute inset-x-8 bottom-6 z-20 md:inset-x-14">
+      <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-cream/15">
+        <div
+          key={progresoKey}
+          className="h-full rounded-full bg-mustard"
+          style={{ animation: `avanzar ${duracionActual}ms linear forwards` }}
+        />
+      </div>
+      <span className="font-mono text-xs text-cream/40">
+        {esBumper ? "Oriental Kitchen" : `${indice} / ${platosVitrina.length}`}
+      </span>
+    </div>
+  );
+
+  if (esBumper) {
+    return (
+      <main className="relative grid h-screen w-screen place-items-center overflow-hidden bg-espresso">
+        <Image
+          key="bumper"
+          src="/logo-favoritos.png"
+          alt="Oriental Kitchen"
+          width={1264}
+          height={713}
+          className="w-[42vw] max-w-2xl animate-[fadeIn_1s_ease-out]"
+          priority
+        />
+        {barraProgreso}
+        <style>{`
+          @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+          @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+        `}</style>
+      </main>
+    );
+  }
+
+  const plato = platosVitrina[indice - 1];
+  const categoria = categorias.find((c) => c.id === plato.categoriaId);
+
   return (
     <main className="relative flex h-screen w-screen flex-col overflow-hidden bg-espresso md:flex-row">
-      {/* Logo, fijo sobre todo lo demás */}
-      <div className="absolute left-8 top-8 z-20 flex items-center gap-3">
-        <div className="relative h-12 w-12">
-          <Image src="/logo-ok.png" alt="Oriental Kitchen" fill className="object-contain" />
-        </div>
-        <span className="font-display text-lg tracking-wide text-cream/90">ORIENTAL KITCHEN</span>
-      </div>
+      {logoEsquina}
 
       {/* Foto — panel grande, mitad de la pantalla */}
       <div key={plato.id} className="relative h-[46%] w-full animate-[fadeIn_0.9s_ease-out] md:h-full md:w-[58%]">
@@ -116,21 +163,9 @@ export default function PantallaFavoritos() {
         <p className="animate-[slideUp_1s_ease-out] font-mono text-3xl font-semibold text-mustard lg:text-4xl">
           {formatoMoneda(plato.precio)}
         </p>
-
-        {/* Barra de progreso del plato actual + contador */}
-        <div className="mt-6">
-          <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-cream/15">
-            <div
-              key={progresoKey}
-              className="h-full rounded-full bg-mustard"
-              style={{ animation: `avanzar ${DURACION_SLIDE_MS}ms linear forwards` }}
-            />
-          </div>
-          <span className="font-mono text-xs text-cream/40">
-            {indice + 1} / {platosVitrina.length}
-          </span>
-        </div>
       </div>
+
+      {barraProgreso}
 
       <style>{`
         @keyframes avanzar { from { width: 0%; } to { width: 100%; } }
