@@ -98,7 +98,8 @@ export default function ProductCard({ producto }: { producto: Producto }) {
           src={producto.imagen!}
           alt={producto.nombre}
           fill
-          sizes="(max-width: 768px) 50vw, 300px"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 400px"
+          quality={90}
           className="object-cover transition duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-surface/70 via-transparent to-transparent" />

@@ -71,7 +71,15 @@ export default function Galeria() {
                   src={producto.imagen!}
                   alt={producto.nombre}
                   fill
-                  sizes="(max-width: 768px) 50vw, 25vw"
+                  // Las celdas "grandes" ocupan el doble de ancho (col-span-2):
+                  // si el sizes no lo refleja, el navegador pide una imagen más
+                  // chica de la que realmente se muestra y se ve borrosa al estirarla.
+                  sizes={
+                    POSICIONES_GRANDES.has(i)
+                      ? "(max-width: 640px) 100vw, 50vw"
+                      : "(max-width: 640px) 50vw, 25vw"
+                  }
+                  quality={90}
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-espresso/0 opacity-0 transition-all duration-300 group-hover:bg-espresso/60 group-hover:opacity-100">

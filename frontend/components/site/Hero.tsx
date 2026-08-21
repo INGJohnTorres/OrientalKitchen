@@ -22,6 +22,8 @@ export default function Hero() {
         alt="Arroz Super Paisa de Oriental Kitchen, recién salteado con vegetales, chorizo y cerdo ahumado"
         fill
         priority
+        sizes="100vw"
+        quality={90}
         className={`object-cover transition-transform duration-[3000ms] ease-out ${listo ? "scale-100" : "scale-110"}`}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-espresso via-espresso/75 to-espresso/40" />

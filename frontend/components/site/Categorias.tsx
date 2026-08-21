@@ -35,7 +35,8 @@ export default function Categorias() {
                   src={cat.imagen}
                   alt={cat.nombre}
                   fill
-                  sizes="(max-width: 768px) 50vw, 25vw"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  quality={90}
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-espresso via-espresso/40 to-transparent transition group-hover:from-ember/70" />
