@@ -40,7 +40,7 @@ export default function CTAFinal() {
               onClick={abrirPedidoRapido}
               className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-cream px-8 py-4 text-base font-semibold text-cream transition hover:scale-105 hover:bg-cream hover:text-ember sm:w-auto"
             >
-              <MessageCircle size={19} /> Pedir por WhatsApp
+              <MessageCircle size={19} /> Pedir a domicilio o recoger
             </button>
           )}
         </div>

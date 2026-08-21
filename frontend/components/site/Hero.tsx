@@ -82,7 +82,7 @@ export default function Hero() {
               onClick={abrirPedidoRapido}
               className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-mustard px-8 py-4 text-base font-semibold text-mustard transition hover:scale-105 hover:bg-mustard hover:text-espresso sm:w-auto"
             >
-              <MessageCircle size={19} /> Pedir por WhatsApp
+              <MessageCircle size={19} /> Pedir a domicilio o recoger
             </button>
           )}
         </div>
