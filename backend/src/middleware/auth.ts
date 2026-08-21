@@ -25,3 +25,11 @@ export function requiereAuth(
     return res.status(401).json({ error: "Token inválido o expirado." });
   }
 }
+
+/** Debe ir después de requiereAuth. Solo la cuenta con rol "superadmin" puede pasar. */
+export function requiereSuperAdmin(req: RequestConUsuario, res: Response, next: NextFunction) {
+  if (req.usuario?.rol !== "superadmin") {
+    return res.status(403).json({ error: "Solo el superadministrador puede hacer esto." });
+  }
+  next();
+}

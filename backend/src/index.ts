@@ -6,6 +6,7 @@ import categoriasRouter from "./routes/categorias";
 import productosRouter from "./routes/productos";
 import pedidosRouter from "./routes/pedidos";
 import authRouter from "./routes/auth";
+import configuracionRouter from "./routes/configuracion";
 import { inicializarSocket } from "./lib/socket";
 
 const app = express();
@@ -23,6 +24,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/categorias", categoriasRouter);
 app.use("/api/productos", productosRouter);
 app.use("/api/pedidos", pedidosRouter);
+app.use("/api/configuracion", configuracionRouter);
 
 // Manejador de errores centralizado
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

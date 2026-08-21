@@ -2,9 +2,13 @@
 
 import { MessageCircle } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
+import { usePlan, permitePedidos } from "@/lib/plan";
 
 export default function WhatsAppFloat() {
   const abrirPedidoRapido = useCartStore((s) => s.abrirPedidoRapido);
+  const plan = usePlan();
+
+  if (plan !== null && !permitePedidos(plan)) return null;
 
   return (
     <button

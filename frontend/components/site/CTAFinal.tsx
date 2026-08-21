@@ -4,11 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
+import { usePlan, permitePedidos } from "@/lib/plan";
 import Reveal from "./Reveal";
 import BambooAccent from "./BambooAccent";
 
 export default function CTAFinal() {
   const abrirPedidoRapido = useCartStore((s) => s.abrirPedidoRapido);
+  const plan = usePlan();
+  const puedePedir = plan === null || permitePedidos(plan);
 
   return (
     <section id="contacto" className="relative scroll-mt-20 overflow-hidden bg-ember px-5 py-20 sm:py-28">
@@ -32,12 +35,14 @@ export default function CTAFinal() {
           >
             Ver menú 🍽️
           </Link>
-          <button
-            onClick={abrirPedidoRapido}
-            className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-cream px-8 py-4 text-base font-semibold text-cream transition hover:scale-105 hover:bg-cream hover:text-ember sm:w-auto"
-          >
-            <MessageCircle size={19} /> Pedir por WhatsApp
-          </button>
+          {puedePedir && (
+            <button
+              onClick={abrirPedidoRapido}
+              className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-cream px-8 py-4 text-base font-semibold text-cream transition hover:scale-105 hover:bg-cream hover:text-ember sm:w-auto"
+            >
+              <MessageCircle size={19} /> Pedir por WhatsApp
+            </button>
+          )}
         </div>
       </Reveal>
     </section>

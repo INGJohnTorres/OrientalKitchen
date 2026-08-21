@@ -49,6 +49,14 @@ function etiquetaTipoPedido(tipoPedido: string, mesa: string | null) {
 
 // POST /api/pedidos — público, el cliente envía su pedido desde el menú
 router.post("/", asyncHandler(async (req, res) => {
+  // El plan "basico" es solo menú digital por QR, sin pedidos. Se valida
+  // también aquí (no solo ocultando botones en el frontend) para que no se
+  // puedan crear pedidos llamando la API directamente.
+  const config = await prisma.configuracion.findFirst();
+  if (config?.plan === "basico") {
+    return res.status(403).json({ error: "El plan actual no incluye pedidos en línea." });
+  }
+
   const parsed = pedidoSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const { tipoPedido, mesa, cliente, telefono, observaciones, items, total } = parsed.data;
@@ -106,8 +114,14 @@ const estadisticasQuerySchema = z.object({
 });
 
 // GET /api/pedidos/estadisticas — admin, ventas y pedidos por tipo/producto
-// en un rango de fechas (máximo un mes) para el dashboard.
+// en un rango de fechas (máximo un mes) para el dashboard. Exclusivo del
+// plan premium.
 router.get("/estadisticas", requiereAuth, asyncHandler(async (req, res) => {
+  const config = await prisma.configuracion.findFirst();
+  if (config?.plan !== "premium") {
+    return res.status(403).json({ error: "El dashboard de estadísticas es exclusivo del plan premium." });
+  }
+
   const parsed = estadisticasQuerySchema.safeParse(req.query);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const { desde, hasta } = parsed.data;

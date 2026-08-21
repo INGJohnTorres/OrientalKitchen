@@ -12,6 +12,7 @@ import CartDrawer from "@/components/CartDrawer";
 import { obtenerCategorias, obtenerProductos } from "@/lib/api";
 import { Categoria, Producto } from "@/lib/types";
 import { useCartStore } from "@/lib/cart-store";
+import { usePlan, permitePedidos } from "@/lib/plan";
 
 function MenuContent() {
   const searchParams = useSearchParams();
@@ -20,6 +21,8 @@ function MenuContent() {
   const setMesa = useCartStore((s) => s.setMesa);
   const mesaActual = useCartStore((s) => s.mesa);
   const cantidadCarrito = useCartStore((s) => s.cantidadTotal());
+  const plan = usePlan();
+  const puedePedir = plan === null || permitePedidos(plan);
 
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -74,18 +77,22 @@ function MenuContent() {
             </span>
             ORIENTAL KITCHEN
           </div>
-          <button
-            onClick={() => setCarritoAbierto(true)}
-            aria-label="Ver carrito"
-            className="relative grid h-9 w-9 place-items-center rounded-full hover:bg-espresso/10 dark:hover:bg-cream/10"
-          >
-            <ShoppingBag size={18} />
-            {cantidadCarrito > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-ember text-[10px] font-bold text-cream">
-                {cantidadCarrito}
-              </span>
-            )}
-          </button>
+          {puedePedir ? (
+            <button
+              onClick={() => setCarritoAbierto(true)}
+              aria-label="Ver carrito"
+              className="relative grid h-9 w-9 place-items-center rounded-full hover:bg-espresso/10 dark:hover:bg-cream/10"
+            >
+              <ShoppingBag size={18} />
+              {cantidadCarrito > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-ember text-[10px] font-bold text-cream">
+                  {cantidadCarrito}
+                </span>
+              )}
+            </button>
+          ) : (
+            <span className="h-9 w-9" />
+          )}
         </header>
 
         {!busqueda && (
@@ -134,8 +141,8 @@ function MenuContent() {
         </div>
       </section>
 
-      <CartButton onOpen={() => setCarritoAbierto(true)} />
-      {carritoAbierto && <CartDrawer onClose={() => setCarritoAbierto(false)} />}
+      {puedePedir && <CartButton onOpen={() => setCarritoAbierto(true)} />}
+      {puedePedir && carritoAbierto && <CartDrawer onClose={() => setCarritoAbierto(false)} />}
     </div>
   );
 }

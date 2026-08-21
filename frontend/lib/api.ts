@@ -1,10 +1,12 @@
 import { categorias as categoriasBase, productos as productosBase } from "./menu-data";
 import {
   Categoria,
+  Configuracion,
   DatosCliente,
   Estadisticas,
   ItemCarrito,
   Pedido,
+  PlanNegocio,
   ProductoVendido,
   Producto,
   ResumenPorTipo,
@@ -14,6 +16,8 @@ import {
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const CLAVE_CATALOGO = "catalogo-restaurante";
 const CLAVE_TOKEN = "admin-token";
+const CLAVE_ROL = "admin-rol";
+const CLAVE_CONFIGURACION = "configuracion-restaurante";
 
 /**
  * ============================================================================
@@ -58,7 +62,17 @@ function headersAuth(extra?: HeadersInit): HeadersInit {
  */
 export async function iniciarSesion(usuario: string, clave: string): Promise<boolean> {
   if (!modoBackend()) {
-    return usuario === "admin" && clave === "admin123";
+    // El superadmin también existe en modo demo, para poder probar
+    // /admin/superadmin sin backend conectado.
+    if (usuario === "superadmin" && clave === "superadmin123") {
+      localStorage.setItem(CLAVE_ROL, "superadmin");
+      return true;
+    }
+    if (usuario === "admin" && clave === "admin123") {
+      localStorage.setItem(CLAVE_ROL, "admin");
+      return true;
+    }
+    return false;
   }
   try {
     const res = await fetch(`${API_URL}/auth/login`, {
@@ -69,6 +83,7 @@ export async function iniciarSesion(usuario: string, clave: string): Promise<boo
     if (!res.ok) return false;
     const data = await res.json();
     localStorage.setItem(CLAVE_TOKEN, data.token);
+    localStorage.setItem(CLAVE_ROL, data.usuario.rol);
     return true;
   } catch (err) {
     console.error("Error al iniciar sesión contra el backend:", err);
@@ -76,9 +91,16 @@ export async function iniciarSesion(usuario: string, clave: string): Promise<boo
   }
 }
 
+/** Rol de la sesión activa ("admin" | "superadmin"), o null si no hay sesión. */
+export function rolActual(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(CLAVE_ROL);
+}
+
 export function cerrarSesion(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(CLAVE_TOKEN);
+  localStorage.removeItem(CLAVE_ROL);
 }
 
 /**
@@ -382,4 +404,63 @@ export async function eliminarPedido(id: string): Promise<void> {
   if (typeof window === "undefined") return;
   const pedidos: Pedido[] = JSON.parse(localStorage.getItem("pedidos-restaurante") || "[]");
   localStorage.setItem("pedidos-restaurante", JSON.stringify(pedidos.filter((p) => p.id !== id)));
+}
+
+// ---------- Configuración del negocio (plan basico/medio/premium) ----------
+
+const CONFIG_DEMO_POR_DEFECTO: Configuracion = {
+  id: "config-principal",
+  nombreRestaurante: "Oriental Kitchen",
+  numeroWhatsapp: "573115243043",
+  plan: "premium",
+};
+
+// Cache en memoria: varios componentes (Hero, CTAFinal, WhatsAppFloat, el
+// dashboard) preguntan el plan actual en la misma carga de página. Evita
+// pedirlo una vez por componente; se limpia al cambiar el plan.
+let cacheConfiguracion: Promise<Configuracion> | null = null;
+
+export function refrescarCacheConfiguracion(): void {
+  cacheConfiguracion = null;
+}
+
+export function obtenerConfiguracion(): Promise<Configuracion> {
+  if (cacheConfiguracion) return cacheConfiguracion;
+
+  cacheConfiguracion = (async () => {
+    if (modoBackend()) {
+      const res = await fetch(`${API_URL}/configuracion`);
+      if (!res.ok) throw new Error("No se pudo cargar la configuración del negocio.");
+      return res.json();
+    }
+    if (typeof window === "undefined") return CONFIG_DEMO_POR_DEFECTO;
+    const guardado = localStorage.getItem(CLAVE_CONFIGURACION);
+    if (!guardado) return CONFIG_DEMO_POR_DEFECTO;
+    try {
+      return { ...CONFIG_DEMO_POR_DEFECTO, ...JSON.parse(guardado) };
+    } catch {
+      return CONFIG_DEMO_POR_DEFECTO;
+    }
+  })();
+
+  return cacheConfiguracion;
+}
+
+/** Solo el superadmin puede llamar esto. */
+export async function actualizarPlan(plan: PlanNegocio): Promise<void> {
+  if (modoBackend()) {
+    const res = await fetch(`${API_URL}/configuracion`, {
+      method: "PATCH",
+      headers: headersAuth(),
+      body: JSON.stringify({ plan }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "No se pudo actualizar el plan.");
+    }
+  } else if (typeof window !== "undefined") {
+    const actual = await obtenerConfiguracion();
+    localStorage.setItem(CLAVE_CONFIGURACION, JSON.stringify({ ...actual, plan }));
+  }
+  refrescarCacheConfiguracion();
 }

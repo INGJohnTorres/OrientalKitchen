@@ -56,6 +56,15 @@ async function main() {
     create: { usuario: "admin", claveHash, rol: "admin" },
   });
 
+  // El superadmin es una cuenta aparte del admin del restaurante: solo ella
+  // puede cambiar el plan (basico/medio/premium) desde /admin/superadmin.
+  const claveSuperAdminHash = await bcrypt.hash("superadmin123", 10);
+  await prisma.usuario.upsert({
+    where: { usuario: "superadmin" },
+    update: {},
+    create: { usuario: "superadmin", claveHash: claveSuperAdminHash, rol: "superadmin" },
+  });
+
   await prisma.configuracion.upsert({
     where: { id: "config-principal" },
     update: {},
@@ -67,6 +76,7 @@ async function main() {
   });
 
   console.log("Listo. Usuario admin: admin / admin123 (cámbiala después de la primera entrada).");
+  console.log("Usuario superadmin: superadmin / superadmin123 (cámbiala después de la primera entrada).");
 }
 
 main()

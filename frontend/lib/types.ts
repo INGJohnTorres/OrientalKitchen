@@ -119,3 +119,21 @@ export interface Estadisticas {
   porTipo: ResumenPorTipo[];
   productos: ProductoVendido[];
 }
+
+/** basico = solo menú digital, medio = suma pedidos por WhatsApp, premium = suma el dashboard de estadísticas. */
+export type PlanNegocio = "basico" | "medio" | "premium";
+
+export interface Configuracion {
+  id: string;
+  nombreRestaurante: string;
+  logoUrl?: string | null;
+  numeroWhatsapp: string;
+  correoNotificacion?: string | null;
+  plan: PlanNegocio;
+}
+
+export interface UsuarioSesion {
+  id: string;
+  usuario: string;
+  rol: string;
+}

@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Flame, Volume2, VolumeX } from "lucide-react";
-import { actualizarEstadoPedido, obtenerPedidos } from "@/lib/api";
+import { actualizarEstadoPedido, obtenerConfiguracion, obtenerPedidos } from "@/lib/api";
 import { EstadoPedido, Pedido } from "@/lib/types";
 import { emojiParaProducto } from "@/lib/whatsapp";
 import { etiquetaTipoPedido } from "@/lib/pedido-utils";
+import { permitePedidos } from "@/lib/plan";
 
 const columnas: { estado: EstadoPedido; titulo: string; color: string }[] = [
   { estado: "nuevo", titulo: "🆕 Nuevos", color: "border-ember" },
@@ -44,6 +45,9 @@ export default function VistaCocina() {
       router.push("/admin");
       return;
     }
+    obtenerConfiguracion().then((c) => {
+      if (!permitePedidos(c.plan)) router.push("/admin/dashboard");
+    });
     cargar();
     const intervalo = setInterval(cargar, 4000);
     return () => clearInterval(intervalo);

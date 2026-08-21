@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bell, LogOut, DollarSign, ClipboardList, ChefHat, Package, Settings } from "lucide-react";
-import { actualizarEstadoPedido, cerrarSesion as cerrarSesionApi, obtenerPedidos } from "@/lib/api";
+import { Bell, LogOut, DollarSign, ClipboardList, ChefHat, Package, Settings, Lock, ShieldCheck } from "lucide-react";
+import { actualizarEstadoPedido, cerrarSesion as cerrarSesionApi, obtenerPedidos, obtenerConfiguracion, rolActual } from "@/lib/api";
 import { emojiParaProducto } from "@/lib/whatsapp";
-import { EstadoPedido, Pedido } from "@/lib/types";
+import { EstadoPedido, Pedido, PlanNegocio } from "@/lib/types";
 import { etiquetaTipoPedido } from "@/lib/pedido-utils";
+import { permitePedidos, permiteEstadisticas } from "@/lib/plan";
 import EstadisticasVentas from "@/components/admin/EstadisticasVentas";
 import clsx from "clsx";
 
@@ -32,12 +33,15 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [pedidosNuevos, setPedidosNuevos] = useState(0);
+  const [plan, setPlan] = useState<PlanNegocio | null>(null);
+  const esSuperAdmin = rolActual() === "superadmin";
 
   useEffect(() => {
     if (sessionStorage.getItem("admin-autenticado") !== "true") {
       router.push("/admin");
       return;
     }
+    obtenerConfiguracion().then((c) => setPlan(c.plan));
     cargar();
     // Simula "tiempo real": refresca cada 4s buscando nuevos pedidos en localStorage.
     // TODO: conectar backend — reemplazar por un socket (ver src/lib/socket.ts del backend).
@@ -74,6 +78,9 @@ export default function AdminDashboard() {
     .filter((p) => p.estado !== "cancelado")
     .reduce((acc, p) => acc + p.total, 0);
 
+  const puedePedir = plan === null || permitePedidos(plan);
+  const puedeVerEstadisticas = plan === null || permiteEstadisticas(plan);
+
   return (
     <main className="min-h-screen bg-parchment dark:bg-espresso dark:text-cream">
       <header className="flex items-center justify-between border-b border-espresso/10 bg-white/60 px-6 py-4 dark:border-cream/10 dark:bg-cocoa/40">
@@ -92,12 +99,23 @@ export default function AdminDashboard() {
           >
             <Settings size={16} />
           </Link>
-          <Link
-            href="/admin/cocina"
-            className="flex items-center gap-1.5 rounded-full bg-ember px-4 py-2 text-sm font-medium text-cream transition hover:bg-ember-dark"
-          >
-            <ChefHat size={16} /> Vista de cocina
-          </Link>
+          {esSuperAdmin && (
+            <Link
+              href="/admin/superadmin"
+              className="grid h-9 w-9 place-items-center rounded-full border border-espresso/20 transition hover:border-ember hover:text-ember dark:border-cream/20"
+              aria-label="Panel de superadministrador"
+            >
+              <ShieldCheck size={16} />
+            </Link>
+          )}
+          {puedePedir && (
+            <Link
+              href="/admin/cocina"
+              className="flex items-center gap-1.5 rounded-full bg-ember px-4 py-2 text-sm font-medium text-cream transition hover:bg-ember-dark"
+            >
+              <ChefHat size={16} /> Vista de cocina
+            </Link>
+          )}
           <button
             onClick={() => setPedidosNuevos(0)}
             className="relative grid h-10 w-10 place-items-center rounded-full hover:bg-espresso/10 dark:hover:bg-cream/10"
@@ -146,9 +164,22 @@ export default function AdminDashboard() {
       </div>
 
       <div className="px-6 pb-8">
-        <EstadisticasVentas />
+        {puedeVerEstadisticas ? (
+          <EstadisticasVentas />
+        ) : (
+          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-espresso/15 bg-white/40 p-5 text-sm text-espresso/50 dark:border-cream/15 dark:bg-cocoa/30 dark:text-cream/50">
+            <Lock size={18} />
+            El dashboard de estadísticas de ventas está disponible en el plan Premium.
+          </div>
+        )}
       </div>
 
+      {!puedePedir ? (
+        <div className="mx-6 mb-8 flex items-center gap-3 rounded-2xl border border-dashed border-espresso/15 bg-white/40 p-5 text-sm text-espresso/50 dark:border-cream/15 dark:bg-cocoa/30 dark:text-cream/50">
+          <Lock size={18} />
+          Los pedidos en línea están disponibles desde el plan Medio.
+        </div>
+      ) : (
       <div className="grid grid-cols-1 gap-4 px-6 pb-8 lg:grid-cols-3">
         {columnas.map((col) => (
           <div key={col.estado} className="flex flex-col gap-3">
@@ -204,6 +235,7 @@ export default function AdminDashboard() {
           </div>
         ))}
       </div>
+      )}
     </main>
   );
 }

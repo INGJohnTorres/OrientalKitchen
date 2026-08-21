@@ -115,12 +115,24 @@ model Usuario {
   @@map("usuarios")
 }
 
+// Plan comercial contratado por el negocio. Controla que funcionalidades
+// estan disponibles (ver GET /api/configuracion y su uso en pedidos.ts):
+// basico = solo menu digital por QR (sin pedidos), medio = suma pedidos por
+// WhatsApp (mesa/domicilio/recoger), premium = suma el dashboard de
+// estadisticas de ventas.
+enum PlanNegocio {
+  basico
+  medio
+  premium
+}
+
 model Configuracion {
-  id                 String  @id @default(cuid())
+  id                 String      @id @default(cuid())
   nombreRestaurante  String
   logoUrl            String?
   numeroWhatsapp     String
   correoNotificacion String?
+  plan               PlanNegocio @default(premium)
 
   @@map("configuracion")
 }
