@@ -42,6 +42,7 @@ export default function SuperAdminPage() {
   const [guardando, setGuardando] = useState(false);
   const [exito, setExito] = useState(false);
   const [error, setError] = useState("");
+  const [autorizado, setAutorizado] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (sessionStorage.getItem("admin-autenticado") !== "true") {
@@ -52,6 +53,7 @@ export default function SuperAdminPage() {
       router.push("/admin/dashboard");
       return;
     }
+    setAutorizado(true);
     obtenerConfiguracion().then((c) => {
       setPlanActual(c.plan);
       setSeleccionado(c.plan);
@@ -74,7 +76,7 @@ export default function SuperAdminPage() {
     }
   }
 
-  if (rolActual() !== "superadmin") return null;
+  if (!autorizado) return null;
 
   return (
     <main className="min-h-screen bg-parchment pb-24 dark:bg-espresso dark:text-cream">

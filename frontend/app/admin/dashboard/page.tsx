@@ -46,13 +46,14 @@ export default function AdminDashboard() {
   const [textoConfirmacion, setTextoConfirmacion] = useState("");
   const [borrandoTodo, setBorrandoTodo] = useState(false);
   const [errorBorrado, setErrorBorrado] = useState("");
-  const esSuperAdmin = rolActual() === "superadmin";
+  const [esSuperAdmin, setEsSuperAdmin] = useState(false);
 
   useEffect(() => {
     if (sessionStorage.getItem("admin-autenticado") !== "true") {
       router.push("/admin");
       return;
     }
+    setEsSuperAdmin(rolActual() === "superadmin");
     obtenerConfiguracion().then((c) => setPlan(c.plan));
     cargar();
     // Simula "tiempo real": refresca cada 4s buscando nuevos pedidos en localStorage.
