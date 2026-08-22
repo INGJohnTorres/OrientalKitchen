@@ -33,6 +33,15 @@ const MapaUbicacion = dynamic(() => import("./MapaUbicacion"), {
   ),
 });
 
+const MapaLocal = dynamic(() => import("./MapaLocal"), {
+  ssr: false,
+  loading: () => (
+    <div className="grid h-48 w-full place-items-center rounded-xl border border-espresso/20 text-sm text-espresso/40 dark:border-cream/20 dark:text-cream/40">
+      Cargando mapa...
+    </div>
+  ),
+});
+
 type Paso = "productos" | "carrito" | "datos" | "pago" | "confirmacion" | "enviado";
 
 function formatoMoneda(v: number) {
@@ -358,7 +367,8 @@ export default function PedidoRapidoModal() {
             )}
 
             {datos.tipoEntrega === "recoger" && (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
+                <MapaLocal />
                 <p className="rounded-lg bg-mustard/10 px-3 py-2.5 text-xs text-mustard">
                   Para recoger en el local, en el siguiente paso eliges cómo pagar: por adelantado
                   (Nequi o Daviplata) o en efectivo al recoger tu pedido.
