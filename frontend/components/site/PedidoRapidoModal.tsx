@@ -46,6 +46,7 @@ function formatoMoneda(v: number) {
 export default function PedidoRapidoModal() {
   const abierto = useCartStore((s) => s.pedidoRapidoAbierto);
   const cerrar = useCartStore((s) => s.cerrarPedidoRapido);
+  const tipoEntregaPreseleccionado = useCartStore((s) => s.tipoEntregaPreseleccionado);
   const { items, cambiarCantidad, quitar, vaciar, total, cantidadTotal } = useCartStore();
 
   const [paso, setPaso] = useState<Paso>("productos");
@@ -72,7 +73,10 @@ export default function PedidoRapidoModal() {
       setCategoriaActiva((actual) => actual || cats[0]?.id || "");
     });
     obtenerProductos().then(setProductos);
-  }, [abierto]);
+    // El cliente ya eligió domicilio/recoger en el botón de la landing —
+    // el formulario arranca directo en esa opción, sin obligarlo a repetirla.
+    setDatos((d) => ({ ...d, tipoEntrega: tipoEntregaPreseleccionado }));
+  }, [abierto, tipoEntregaPreseleccionado]);
 
   const productosFiltrados = useMemo(() => {
     if (busqueda.trim()) {

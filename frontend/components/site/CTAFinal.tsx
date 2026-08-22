@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { Bike, Store } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
 import { usePlan, permitePedidos } from "@/lib/plan";
 import Reveal from "./Reveal";
@@ -28,20 +28,34 @@ export default function CTAFinal() {
         <p className="max-w-md text-cream/90">
           Descubre nuestros platos y disfruta de tu próximo favorito.
         </p>
-        <div className="mt-2 flex flex-col items-center gap-3 sm:flex-row">
+        <div className="mt-2 flex flex-col items-center gap-3">
           <Link
             href="/menu"
             className="flex w-full items-center justify-center gap-2 rounded-full bg-espresso px-8 py-4 text-base font-semibold text-cream shadow-lg transition hover:scale-105 sm:w-auto"
           >
             Ver menú 🍽️
           </Link>
+
           {puedePedir && (
-            <button
-              onClick={abrirPedidoRapido}
-              className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-cream px-8 py-4 text-base font-semibold text-cream transition hover:scale-105 hover:bg-cream hover:text-ember sm:w-auto"
-            >
-              <MessageCircle size={19} /> Pedir a domicilio o recoger
-            </button>
+            <div className="mt-3 flex flex-col items-center gap-2.5">
+              <p className="font-display text-sm tracking-wide text-cream/80">
+                ¿Cómo prefieres recibir tu pedido?
+              </p>
+              <div className="flex flex-col gap-2.5 sm:flex-row">
+                <button
+                  onClick={() => abrirPedidoRapido("domicilio")}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-cream px-6 py-3 text-sm font-semibold text-ember transition hover:scale-105 hover:bg-espresso hover:text-cream sm:w-auto"
+                >
+                  <Bike size={18} /> A domicilio
+                </button>
+                <button
+                  onClick={() => abrirPedidoRapido("recoger")}
+                  className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-cream px-6 py-3 text-sm font-semibold text-cream transition hover:scale-105 hover:bg-cream hover:text-ember sm:w-auto"
+                >
+                  <Store size={18} /> Para recoger en tienda
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </Reveal>

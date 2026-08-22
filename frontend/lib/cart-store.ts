@@ -16,7 +16,11 @@ interface CartState {
   cantidadTotal: () => number;
   /** Controla el modal de "Pedido rápido por WhatsApp" de la página principal. */
   pedidoRapidoAbierto: boolean;
-  abrirPedidoRapido: () => void;
+  /** Tipo de entrega elegido en el CTA de la landing (domicilio/recoger), antes de
+   * abrir el modal — así el formulario ya arranca en la opción que el cliente tocó,
+   * en vez de siempre asumir "domicilio". */
+  tipoEntregaPreseleccionado: "domicilio" | "recoger";
+  abrirPedidoRapido: (tipoEntrega?: "domicilio" | "recoger") => void;
   cerrarPedidoRapido: () => void;
 }
 
@@ -58,7 +62,9 @@ export const useCartStore = create<CartState>()(
         ),
       cantidadTotal: () => get().items.reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0),
       pedidoRapidoAbierto: false,
-      abrirPedidoRapido: () => set({ pedidoRapidoAbierto: true }),
+      tipoEntregaPreseleccionado: "domicilio",
+      abrirPedidoRapido: (tipoEntrega = "domicilio") =>
+        set({ pedidoRapidoAbierto: true, tipoEntregaPreseleccionado: tipoEntrega }),
       cerrarPedidoRapido: () => set({ pedidoRapidoAbierto: false }),
     }),
     {
