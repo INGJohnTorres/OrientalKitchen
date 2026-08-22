@@ -130,7 +130,8 @@ export function enviarPedidoPorWhatsApp(
 export function construirMensajePedidoRapido(
   datos: DatosPedidoRapido,
   items: ItemCarrito[],
-  total: number
+  total: number,
+  costoDomicilio = 0
 ) {
   const hora = new Date().toLocaleTimeString("es-CO", {
     hour: "2-digit",
@@ -154,15 +155,21 @@ export function construirMensajePedidoRapido(
     if (datos.detalleDireccion?.trim()) {
       mensaje += `Detalle (apto/torre/indicaciones): ${datos.detalleDireccion.trim()}\n`;
     }
-    mensaje += `\n`;
+    if (costoDomicilio > 0) {
+      mensaje += `Costo de domicilio: ${formatoMoneda(costoDomicilio)}\n`;
+    }
   } else {
     mensaje += `Entrega: Recoger en el local\n`;
-    if (datos.metodoPago === "efectivo") {
-      mensaje += `Pago: Efectivo — el cliente paga al recoger su pedido en el local\n\n`;
-    } else {
-      const metodo = datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi";
-      mensaje += `Pago: ${metodo} — cliente confirma que ya realizó la transferencia (adjunta comprobante en este chat)\n\n`;
-    }
+  }
+
+  // El método de pago aplica igual para domicilio y recoger — solo cambia
+  // dónde paga en efectivo (al repartidor vs. en el local).
+  if (datos.metodoPago === "efectivo") {
+    const dondePaga = datos.tipoEntrega === "domicilio" ? "al repartidor cuando llegue su pedido" : "al recoger su pedido en el local";
+    mensaje += `Pago: Efectivo — el cliente paga ${dondePaga}\n\n`;
+  } else {
+    const metodo = datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi";
+    mensaje += `Pago: ${metodo} — cliente confirma que ya realizó la transferencia (adjunta comprobante en este chat)\n\n`;
   }
 
   mensaje += `Pedido:\n${lineasPedido}\n\n`;
@@ -181,10 +188,11 @@ export function construirMensajePedidoRapido(
 export function enviarPedidoRapidoPorWhatsApp(
   datos: DatosPedidoRapido,
   items: ItemCarrito[],
-  total: number
+  total: number,
+  costoDomicilio = 0
 ) {
   const numero = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "").replace(/\D/g, "");
-  const mensaje = construirMensajePedidoRapido(datos, items, total);
+  const mensaje = construirMensajePedidoRapido(datos, items, total, costoDomicilio);
   const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank", "noopener,noreferrer");
 }

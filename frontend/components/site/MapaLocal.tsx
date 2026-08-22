@@ -4,18 +4,16 @@ import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Navigation } from "lucide-react";
+import { UBICACION_LOCAL } from "@/lib/ubicacion-local";
 
-// Ubicación real del local (tomada del link de Google Maps del negocio:
-// Oriental Kitchen, Cl. 30 #2-10, Soacha, Cundinamarca). A diferencia de
-// MapaUbicacion (donde el cliente marca SU dirección para domicilio), este
-// mapa es fijo y de solo lectura: muestra dónde queda el local para que el
-// cliente sepa a dónde ir a recoger su pedido. El botón "Cómo llegar" sigue
-// abriendo Google Maps para las indicaciones reales — Google descontinuó el
-// truco de incrustar su mapa sin API key, pero OpenStreetMap (ya usado en
-// MapaUbicacion) no tiene ese problema y no requiere ninguna configuración.
-const LAT = 4.5842755;
-const LNG = -74.2052157;
-const NOMBRE_LOCAL = "Oriental Kitchen";
+// A diferencia de MapaUbicacion (donde el cliente marca SU dirección para
+// domicilio), este mapa es fijo y de solo lectura: muestra dónde queda el
+// local para que el cliente sepa a dónde ir a recoger su pedido. El botón
+// "Cómo llegar" sigue abriendo Google Maps para las indicaciones reales —
+// Google descontinuó el truco de incrustar su mapa sin API key, pero
+// OpenStreetMap (ya usado en MapaUbicacion) no tiene ese problema y no
+// requiere ninguna configuración.
+const { lat: LAT, lng: LNG, nombre: NOMBRE_LOCAL } = UBICACION_LOCAL;
 
 const iconoPin = L.divIcon({
   className: "",

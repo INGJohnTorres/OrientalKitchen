@@ -21,6 +21,7 @@ import { obtenerCategorias, obtenerProductos, crearPedido } from "@/lib/api";
 import { Categoria, DatosPedidoRapido, Producto } from "@/lib/types";
 import { enviarPedidoRapidoPorWhatsApp, emojiParaProducto } from "@/lib/whatsapp";
 import { cuentasPago } from "@/lib/social";
+import { calcularCostoDomicilio } from "@/lib/ubicacion-local";
 import CategoryNav from "@/components/CategoryNav";
 import ProductCard from "@/components/ProductCard";
 
@@ -99,22 +100,33 @@ export default function PedidoRapidoModal() {
 
   const listaSinFotos = productosFiltrados.length > 0 && productosFiltrados.every((p) => !p.imagen);
 
+  // Solo aplica para domicilio, y solo una vez que el cliente marcó su
+  // ubicación en el mapa — antes de eso no hay cómo calcular la distancia.
+  const costoDomicilio = useMemo(() => {
+    if (datos.tipoEntrega !== "domicilio" || !datos.ubicacion) return 0;
+    return calcularCostoDomicilio(datos.ubicacion.lat, datos.ubicacion.lng);
+  }, [datos.tipoEntrega, datos.ubicacion]);
+
+  const totalConEnvio = total() + costoDomicilio;
+
   // Igual que en el carrito de mesa: se abre WhatsApp de forma SÍNCRONA,
   // dentro del mismo clic, para que el navegador no lo bloquee como pop-up.
   function confirmarPedido() {
-    enviarPedidoRapidoPorWhatsApp(datos, items, total());
+    enviarPedidoRapidoPorWhatsApp(datos, items, totalConEnvio, costoDomicilio);
 
     // También lo guardamos para que aparezca en el panel admin / vista de
     // cocina, igual que los pedidos de mesa — con tipoPedido propio para que
     // el panel distinga mesa/domicilio/recoger sin adivinar por texto.
+    const pago =
+      datos.metodoPago === "efectivo"
+        ? `pago en efectivo ${datos.tipoEntrega === "domicilio" ? "al repartidor" : "al recoger"}`
+        : `pago por ${datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} (verificar comprobante)`;
     const entrega =
       datos.tipoEntrega === "domicilio"
         ? `Domicilio: ${datos.ubicacion?.direccion ?? "(ver ubicación en WhatsApp)"}${
             datos.detalleDireccion ? ` — ${datos.detalleDireccion}` : ""
-          }`
-        : datos.metodoPago === "efectivo"
-        ? `Recoger en el local — pago en efectivo al recoger`
-        : `Recoger en el local — pago por ${datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} (verificar comprobante)`;
+          } — costo de domicilio ${formatoMoneda(costoDomicilio)} — ${pago}`
+        : `Recoger en el local — ${pago}`;
     crearPedido(
       {
         nombre: datos.nombre,
@@ -123,7 +135,7 @@ export default function PedidoRapidoModal() {
         observaciones: [entrega, datos.observaciones].filter(Boolean).join(" — "),
       },
       items,
-      total()
+      totalConEnvio
     ).catch((err) => console.error("No se pudo guardar el pedido rápido para el panel:", err));
 
     setPaso("enviado");
@@ -158,9 +170,7 @@ export default function PedidoRapidoModal() {
               onClick={() =>
                 setPaso(
                   paso === "confirmacion"
-                    ? datos.tipoEntrega === "recoger"
-                      ? "pago"
-                      : "datos"
+                    ? "pago"
                     : paso === "pago"
                     ? "datos"
                     : paso === "datos"
@@ -296,7 +306,7 @@ export default function PedidoRapidoModal() {
                 return;
               }
               setErrorFormulario("");
-              setPaso(datos.tipoEntrega === "recoger" ? "pago" : "confirmacion");
+              setPaso("pago");
             }}
           >
             <label className="flex flex-col gap-1 text-sm">
@@ -363,6 +373,13 @@ export default function PedidoRapidoModal() {
                     placeholder="Ej: Torre 3, apto 301, portería azul"
                   />
                 </label>
+                {datos.ubicacion && (
+                  <p className="rounded-lg bg-mustard/10 px-3 py-2.5 text-xs text-mustard">
+                    Costo de domicilio: <strong>{formatoMoneda(costoDomicilio)}</strong> (según la
+                    distancia hasta tu dirección). En el siguiente paso eliges cómo pagar: por
+                    adelantado (Nequi o Daviplata) o en efectivo al repartidor.
+                  </p>
+                )}
               </>
             )}
 
@@ -393,7 +410,7 @@ export default function PedidoRapidoModal() {
             {errorFormulario && <p className="text-sm text-ember">{errorFormulario}</p>}
 
             <button type="submit" className="mt-2 rounded-full bg-ember py-3 font-semibold text-cream transition hover:bg-ember-dark">
-              {datos.tipoEntrega === "recoger" ? "Continuar al pago" : "Revisar pedido"}
+              Continuar al pago
             </button>
           </form>
         )}
@@ -402,7 +419,9 @@ export default function PedidoRapidoModal() {
         {paso === "pago" && (
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 pt-2">
             <p className="text-sm text-espresso/70 dark:text-cream/70">
-              Para recoger en el local, elige cómo quieres pagar tu pedido.
+              {datos.tipoEntrega === "domicilio"
+                ? "Elige cómo quieres pagar tu domicilio."
+                : "Para recoger en el local, elige cómo quieres pagar tu pedido."}
             </p>
 
             <div className="flex gap-2">
@@ -444,8 +463,11 @@ export default function PedidoRapidoModal() {
             {datos.metodoPago === "efectivo" ? (
               <>
                 <p className="rounded-lg bg-espresso/5 px-3 py-2.5 text-xs text-espresso/60 dark:bg-cream/5 dark:text-cream/60">
-                  Pagarás en efectivo directamente en el local al recoger tu pedido. Total a pagar:{" "}
-                  <span className="font-mono font-semibold">{formatoMoneda(total())}</span>
+                  {datos.tipoEntrega === "domicilio"
+                    ? "Pagarás en efectivo al repartidor cuando llegue tu pedido."
+                    : "Pagarás en efectivo directamente en el local al recoger tu pedido."}{" "}
+                  Total a pagar:{" "}
+                  <span className="font-mono font-semibold">{formatoMoneda(totalConEnvio)}</span>
                 </p>
 
                 <button
@@ -486,7 +508,7 @@ export default function PedidoRapidoModal() {
                 </div>
 
                 <p className="rounded-lg bg-espresso/5 px-3 py-2.5 text-xs text-espresso/60 dark:bg-cream/5 dark:text-cream/60">
-                  Total a transferir: <span className="font-mono font-semibold">{formatoMoneda(total())}</span>
+                  Total a transferir: <span className="font-mono font-semibold">{formatoMoneda(totalConEnvio)}</span>
                 </p>
 
                 <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-espresso/15 px-3 py-3 text-sm dark:border-cream/15">
@@ -524,17 +546,16 @@ export default function PedidoRapidoModal() {
                 <>
                   <p>Domicilio: {datos.ubicacion?.direccion}</p>
                   {datos.detalleDireccion && <p>Detalle: {datos.detalleDireccion}</p>}
+                  <p>Costo de domicilio: {formatoMoneda(costoDomicilio)}</p>
                 </>
               ) : (
-                <>
-                  <p>
-                    {datos.metodoPago === "efectivo"
-                      ? "Recoger en el local — pago en efectivo al recoger"
-                      : `Recoger en el local — pago por ${datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} ✓`}
-                  </p>
-                  <p>Tiempo estimado: 15 a 30 min</p>
-                </>
+                <p>Tiempo estimado: 15 a 30 min</p>
               )}
+              <p>
+                {datos.metodoPago === "efectivo"
+                  ? `Pago en efectivo ${datos.tipoEntrega === "domicilio" ? "al repartidor" : "al recoger"}`
+                  : `Pago por ${datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} ✓`}
+              </p>
               <div className="my-2 border-t border-dashed border-espresso/20 dark:border-cream/20" />
               {items.map((item) => (
                 <p key={item.claveUnica}>
@@ -548,7 +569,7 @@ export default function PedidoRapidoModal() {
                 </>
               )}
               <div className="my-2 border-t border-dashed border-espresso/20 dark:border-cream/20" />
-              <p className="text-base font-semibold">Total: {formatoMoneda(total())}</p>
+              <p className="text-base font-semibold">Total: {formatoMoneda(totalConEnvio)}</p>
             </div>
             <button
               onClick={confirmarPedido}
