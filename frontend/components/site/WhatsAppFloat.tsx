@@ -12,7 +12,7 @@ export default function WhatsAppFloat() {
 
   return (
     <button
-      onClick={abrirPedidoRapido}
+      onClick={() => abrirPedidoRapido()}
       aria-label="Pedir por WhatsApp — domicilio o recoger en el local"
       className="group fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-olive py-3.5 pl-3.5 pr-3.5 text-cream shadow-xl shadow-black/30 transition-all duration-300 hover:pr-5 hover:shadow-2xl sm:bottom-6 sm:right-6"
     >
