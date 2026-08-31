@@ -1,10 +1,12 @@
 /**
  * Enlaces de contacto/redes del restaurante, centralizados aquí para que no
- * queden números o URLs sueltos repetidos por todo el código.
+ * queden números o URLs sueltos repetidos por todo el código. Los valores
+ * en sí viven en lib/config-restaurante.ts.
  */
+import { NUMERO_WHATSAPP, REDES_SOCIALES } from "./config-restaurante";
 
 export function numeroWhatsApp(): string {
-  return (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "").replace(/\D/g, "");
+  return NUMERO_WHATSAPP;
 }
 
 export function urlWhatsAppMensaje(mensaje: string): string {
@@ -16,8 +18,8 @@ export const MENSAJE_CONTACTO_RAPIDO =
 
 export const redes = {
   whatsapp: () => urlWhatsAppMensaje(MENSAJE_CONTACTO_RAPIDO),
-  facebook: "https://www.facebook.com/p/Oriental-Kitchen-100063602407527/",
-  instagram: "https://www.instagram.com/oriental.kitchen_/",
+  facebook: REDES_SOCIALES.facebook,
+  instagram: REDES_SOCIALES.instagram,
 };
 
 /**

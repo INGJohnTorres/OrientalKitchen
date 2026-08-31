@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bungee, Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/google";
+import { NOMBRE_RESTAURANTE, ESLOGAN, DESCRIPCION_SEO, PALABRAS_CLAVE_SEO } from "@/lib/config-restaurante";
 import "./globals.css";
 
 const bungee = Bungee({
@@ -20,19 +21,14 @@ const plexMono = IBM_Plex_Mono({
   weight: ["400", "500", "600"],
 });
 
+const TITULO = `${NOMBRE_RESTAURANTE} — ${ESLOGAN}`;
+
 export const metadata: Metadata = {
-  title: "Oriental Kitchen — Los expertos en arroz",
-  description:
-    "Cocina oriental con alma colombiana en Bogotá. Arroz chino, platos especiales, comida rápida y más. Pide en línea o por WhatsApp, para mesa o domicilio.",
-  keywords: [
-    "Oriental Kitchen",
-    "arroz chino Bogotá",
-    "comida oriental",
-    "restaurante asiático",
-    "domicilios comida china",
-  ],
+  title: TITULO,
+  description: DESCRIPCION_SEO,
+  keywords: PALABRAS_CLAVE_SEO,
   openGraph: {
-    title: "Oriental Kitchen — Los expertos en arroz",
+    title: TITULO,
     description:
       "Cocina oriental con alma colombiana. Descubre el menú y pide en línea o por WhatsApp.",
     images: ["/panda-chef.png"],
@@ -41,7 +37,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Oriental Kitchen — Los expertos en arroz",
+    title: TITULO,
     description: "Cocina oriental con alma colombiana. Descubre el menú y pide en línea.",
     images: ["/panda-chef.png"],
   },

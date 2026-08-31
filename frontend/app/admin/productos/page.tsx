@@ -29,6 +29,7 @@ import {
 import { comprimirImagen } from "@/lib/image-utils";
 import { Categoria, Etiqueta, Producto, Variante } from "@/lib/types";
 import { permiteEditorProductos } from "@/lib/plan";
+import { NOMBRE_RESTAURANTE } from "@/lib/config-restaurante";
 
 const ETIQUETAS: Etiqueta[] = ["Nuevo", "Picante", "Vegetariano", "Promoción"];
 
@@ -123,7 +124,7 @@ export default function EditorProductos() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "catalogo-oriental-kitchen.json";
+    a.download = `catalogo-${NOMBRE_RESTAURANTE.toLowerCase().replace(/\s+/g, "-")}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }

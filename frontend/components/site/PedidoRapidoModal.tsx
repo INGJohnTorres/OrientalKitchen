@@ -22,6 +22,7 @@ import { Categoria, DatosPedidoRapido, Producto } from "@/lib/types";
 import { enviarPedidoRapidoPorWhatsApp, emojiParaProducto } from "@/lib/whatsapp";
 import { cuentasPago } from "@/lib/social";
 import { calcularCostoDomicilio } from "@/lib/ubicacion-local";
+import { NOMBRE_RESTAURANTE } from "@/lib/config-restaurante";
 import CategoryNav from "@/components/CategoryNav";
 import ProductCard from "@/components/ProductCard";
 
@@ -487,7 +488,7 @@ export default function PedidoRapidoModal() {
                 <div className="flex items-center justify-between rounded-xl border border-dashed border-mustard/50 bg-mustard/10 px-4 py-3.5">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-mustard">
-                      {datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} de Oriental Kitchen
+                      {datos.metodoPago === "daviplata" ? "Daviplata" : "Nequi"} de {NOMBRE_RESTAURANTE}
                     </p>
                     <p className="font-mono text-lg font-semibold">
                       {datos.metodoPago === "daviplata" ? cuentasPago.daviplata : cuentasPago.nequi}

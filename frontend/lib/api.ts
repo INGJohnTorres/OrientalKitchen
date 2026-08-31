@@ -1,4 +1,5 @@
 import { categorias as categoriasBase, productos as productosBase } from "./menu-data";
+import { NOMBRE_RESTAURANTE, NUMERO_WHATSAPP } from "./config-restaurante";
 import {
   Categoria,
   Configuracion,
@@ -424,8 +425,8 @@ export async function eliminarTodosPedidos(): Promise<void> {
 
 const CONFIG_DEMO_POR_DEFECTO: Configuracion = {
   id: "config-principal",
-  nombreRestaurante: "Oriental Kitchen",
-  numeroWhatsapp: "573115243043",
+  nombreRestaurante: NOMBRE_RESTAURANTE,
+  numeroWhatsapp: NUMERO_WHATSAPP,
   plan: "premium",
 };
 

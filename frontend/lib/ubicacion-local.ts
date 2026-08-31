@@ -1,11 +1,13 @@
-// Ubicación real del local (tomada del link de Google Maps del negocio:
-// Oriental Kitchen, Cl. 30 #2-10, Soacha, Cundinamarca). Punto de referencia
-// único para el mapa del local (MapaLocal) y para calcular el costo de
-// domicilio según la distancia hasta la dirección del cliente.
+// La ubicación en sí vive en lib/config-restaurante.ts (junto con el resto
+// de datos del negocio) — acá solo se usa para el mapa del local (MapaLocal)
+// y para calcular el costo de domicilio según la distancia hasta la
+// dirección del cliente.
+import { NOMBRE_RESTAURANTE, UBICACION_LOCAL as UBICACION } from "./config-restaurante";
+
 export const UBICACION_LOCAL = {
-  lat: 4.5842755,
-  lng: -74.2052157,
-  nombre: "Oriental Kitchen",
+  lat: UBICACION.lat,
+  lng: UBICACION.lng,
+  nombre: NOMBRE_RESTAURANTE,
 };
 
 // Domicilios hasta este radio cobran el valor base; más lejos, el valor alto.

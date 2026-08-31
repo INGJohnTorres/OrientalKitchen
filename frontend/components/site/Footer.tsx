@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Facebook, Instagram, MessageCircle } from "lucide-react";
 import { redes } from "@/lib/social";
+import { NOMBRE_RESTAURANTE, ESLOGAN, DESCRIPCION_CORTA } from "@/lib/config-restaurante";
 import SocialBadge from "./SocialBadge";
 
 export default function Footer() {
@@ -13,12 +14,12 @@ export default function Footer() {
         <div className="flex flex-col items-center gap-3 sm:items-start">
           <div className="flex items-center gap-2">
             <div className="relative h-8 w-8">
-              <Image src="/logo-ok.png" alt="Oriental Kitchen" fill className="object-contain" />
+              <Image src="/logo-ok.png" alt={NOMBRE_RESTAURANTE} fill className="object-contain" />
             </div>
-            <span className="font-display text-sm text-cream">ORIENTAL KITCHEN</span>
+            <span className="font-display text-sm text-cream">{NOMBRE_RESTAURANTE.toUpperCase()}</span>
           </div>
           <p className="max-w-xs text-sm text-cream/50">
-            Los expertos en arroz. Cocina oriental con alma colombiana.
+            {ESLOGAN}. {DESCRIPCION_CORTA}.
           </p>
         </div>
 
@@ -79,7 +80,7 @@ export default function Footer() {
       </div>
 
       <p className="mt-6 text-center text-xs text-cream/30">
-        © {año} Oriental Kitchen — Los expertos en arroz.
+        © {año} {NOMBRE_RESTAURANTE} — {ESLOGAN}.
       </p>
     </footer>
   );

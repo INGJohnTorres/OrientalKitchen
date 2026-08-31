@@ -16,6 +16,7 @@ import { emojiParaProducto } from "@/lib/whatsapp";
 import { EstadoPedido, Pedido, PlanNegocio } from "@/lib/types";
 import { etiquetaTipoPedido } from "@/lib/pedido-utils";
 import { permitePedidos, permiteEstadisticas, permiteEditorProductos } from "@/lib/plan";
+import { NOMBRE_RESTAURANTE } from "@/lib/config-restaurante";
 import EstadisticasVentas from "@/components/admin/EstadisticasVentas";
 import clsx from "clsx";
 
@@ -123,7 +124,7 @@ export default function AdminDashboard() {
   return (
     <main className="min-h-screen bg-parchment dark:bg-espresso dark:text-cream">
       <header className="flex items-center justify-between border-b border-espresso/10 bg-white/60 px-6 py-4 dark:border-cream/10 dark:bg-cocoa/40">
-        <h1 className="font-display text-xl font-semibold">Panel — Oriental Kitchen</h1>
+        <h1 className="font-display text-xl font-semibold">Panel — {NOMBRE_RESTAURANTE}</h1>
         <div className="flex items-center gap-4">
           {puedeEditarProductos && (
             <Link

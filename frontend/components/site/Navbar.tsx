@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Menu, X, ShoppingBag } from "lucide-react";
 import { usePlan, permitePedidos } from "@/lib/plan";
+import { NOMBRE_RESTAURANTE } from "@/lib/config-restaurante";
 import clsx from "clsx";
 
 const ENLACES = [
@@ -42,10 +43,10 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
         <Link href="#inicio" className="flex items-center gap-2">
           <div className="relative h-9 w-9 shrink-0">
-            <Image src="/logo-ok.png" alt="Oriental Kitchen" fill className="object-contain" />
+            <Image src="/logo-ok.png" alt={NOMBRE_RESTAURANTE} fill className="object-contain" />
           </div>
           <span className="font-display text-sm tracking-wide text-cream sm:text-base">
-            ORIENTAL KITCHEN
+            {NOMBRE_RESTAURANTE.toUpperCase()}
           </span>
         </Link>
 
@@ -86,9 +87,9 @@ export default function Navbar() {
         <div className="flex items-center justify-between px-5 py-4">
           <div className="flex items-center gap-2">
             <div className="relative h-8 w-8">
-              <Image src="/logo-ok.png" alt="Oriental Kitchen" fill className="object-contain" />
+              <Image src="/logo-ok.png" alt={NOMBRE_RESTAURANTE} fill className="object-contain" />
             </div>
-            <span className="font-display text-sm text-cream">ORIENTAL KITCHEN</span>
+            <span className="font-display text-sm text-cream">{NOMBRE_RESTAURANTE.toUpperCase()}</span>
           </div>
           <button
             onClick={() => setAbierto(false)}

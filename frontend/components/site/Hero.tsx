@@ -6,6 +6,7 @@ import { ShoppingBag, Bike, Store } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCartStore } from "@/lib/cart-store";
 import { usePlan, permitePedidos } from "@/lib/plan";
+import { NOMBRE_RESTAURANTE } from "@/lib/config-restaurante";
 import BambooAccent from "./BambooAccent";
 
 export default function Hero() {
@@ -19,7 +20,7 @@ export default function Hero() {
     <section id="inicio" className="relative flex min-h-[100svh] scroll-mt-20 items-center overflow-hidden bg-espresso">
       <Image
         src="/productos/arroz-paisa.jpg"
-        alt="Arroz Super Paisa de Oriental Kitchen, recién salteado con vegetales, chorizo y cerdo ahumado"
+        alt={`Arroz Super Paisa de ${NOMBRE_RESTAURANTE}, recién salteado con vegetales, chorizo y cerdo ahumado`}
         fill
         priority
         sizes="100vw"
@@ -42,7 +43,7 @@ export default function Hero() {
           <div className="relative h-36 w-36 sm:h-44 sm:w-44 lg:h-52 lg:w-52">
             <Image
               src="/panda-chef.png"
-              alt="Panda chef, mascota de Oriental Kitchen"
+              alt={`Panda chef, mascota de ${NOMBRE_RESTAURANTE}`}
               fill
               className="object-contain drop-shadow-2xl"
             />

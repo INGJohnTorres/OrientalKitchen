@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { COLORES } from "./lib/config-restaurante";
 
 const config: Config = {
   darkMode: "class",
@@ -9,16 +10,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        cream: "#F5F1E6",
-        parchment: "#E9E4D6",
-        espresso: "#121214",
-        cocoa: "#1C1B1F",
-        surface: "#232227",
-        ember: "#D2232A",
-        "ember-dark": "#9C161B",
-        mustard: "#D9A441",
-        olive: "#2F7A5C",
-        clay: "#3A3A3E",
+        cream: COLORES.cream,
+        parchment: COLORES.parchment,
+        espresso: COLORES.espresso,
+        cocoa: COLORES.cocoa,
+        surface: COLORES.surface,
+        ember: COLORES.ember,
+        "ember-dark": COLORES.emberDark,
+        mustard: COLORES.mustard,
+        olive: COLORES.olive,
+        clay: COLORES.clay,
       },
       fontFamily: {
         display: ["var(--font-bungee)", "sans-serif"],

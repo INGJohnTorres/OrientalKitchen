@@ -8,6 +8,7 @@ import { EstadoPedido, Pedido } from "@/lib/types";
 import { emojiParaProducto } from "@/lib/whatsapp";
 import { etiquetaTipoPedido } from "@/lib/pedido-utils";
 import { permitePedidos } from "@/lib/plan";
+import { NOMBRE_RESTAURANTE } from "@/lib/config-restaurante";
 
 const columnas: { estado: EstadoPedido; titulo: string; color: string }[] = [
   { estado: "nuevo", titulo: "🆕 Nuevos", color: "border-ember" },
@@ -74,7 +75,7 @@ export default function VistaCocina() {
       <header className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Flame className="text-ember" />
-          <h1 className="font-display text-2xl">Vista de Cocina — Oriental Kitchen</h1>
+          <h1 className="font-display text-2xl">Vista de Cocina — {NOMBRE_RESTAURANTE}</h1>
         </div>
         <button
           onClick={() => setSonidoActivo((s) => !s)}

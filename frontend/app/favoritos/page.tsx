@@ -5,10 +5,14 @@ import Image from "next/image";
 import { Yuji_Syuku } from "next/font/google";
 import { obtenerCategorias, obtenerProductos } from "@/lib/api";
 import { Categoria, Producto } from "@/lib/types";
+import { NOMBRE_RESTAURANTE } from "@/lib/config-restaurante";
 
-// Fuente del lettering "Oriental Kitchen" de la tarjeta de marca — caligrafía
-// oriental con serifas afiladas, elegida entre varias opciones probadas en
-// Lovable para acercarse al logo de referencia del negocio.
+// Fuente del lettering de la tarjeta de marca — caligrafía oriental con
+// serifas afiladas, elegida entre varias opciones probadas en Lovable para
+// acercarse al logo de referencia del negocio. Las imágenes logo-favoritos.png
+// y logo-mascota.png son arte hecho a medida para Oriental Kitchen (panda +
+// bambú) — hay que reemplazarlas por las del negocio nuevo, el nombre solo
+// no alcanza para "genericizarlas".
 const yujiSyuku = Yuji_Syuku({ weight: "400", subsets: ["latin"] });
 
 // Cuánto tiempo se queda cada plato en pantalla (ms). Suficiente para leer
@@ -73,7 +77,7 @@ export default function PantallaFavoritos() {
   // marca (ya es el protagonista completo de esa pantalla).
   const logoEsquina = !esBumper && (
     <div className="absolute left-8 top-8 z-20">
-      <Image src="/logo-favoritos.png" alt="Oriental Kitchen" width={1264} height={713} className="h-16 w-auto drop-shadow-lg" priority />
+      <Image src="/logo-favoritos.png" alt={NOMBRE_RESTAURANTE} width={1264} height={713} className="h-16 w-auto drop-shadow-lg" priority />
     </div>
   );
 
@@ -87,7 +91,7 @@ export default function PantallaFavoritos() {
         />
       </div>
       <span className="font-mono text-xs text-cream/40">
-        {esBumper ? "Oriental Kitchen" : `${indice} / ${platosVitrina.length}`}
+        {esBumper ? NOMBRE_RESTAURANTE : `${indice} / ${platosVitrina.length}`}
       </span>
     </div>
   );
@@ -98,9 +102,9 @@ export default function PantallaFavoritos() {
         <div key="bumper" className="flex flex-col items-center animate-[fadeIn_1s_ease-out]">
           <span
             className={`${yujiSyuku.className} ok-ink text-[10vw] leading-none sm:text-7xl lg:text-8xl`}
-            data-text="ORIENTAL KITCHEN"
+            data-text={NOMBRE_RESTAURANTE.toUpperCase()}
           >
-            <span className="ok-fill">ORIENTAL KITCHEN</span>
+            <span className="ok-fill">{NOMBRE_RESTAURANTE.toUpperCase()}</span>
           </span>
 
           <div className="ok-rule my-4 w-2/3" />

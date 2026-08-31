@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LockKeyhole, Loader2 } from "lucide-react";
 import { iniciarSesion } from "@/lib/api";
+import { NOMBRE_RESTAURANTE } from "@/lib/config-restaurante";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function AdminLoginPage() {
             <LockKeyhole size={20} />
           </div>
           <h1 className="font-display text-xl font-semibold">Panel administrativo</h1>
-          <p className="text-sm text-cream/50">Oriental Kitchen</p>
+          <p className="text-sm text-cream/50">{NOMBRE_RESTAURANTE}</p>
         </div>
 
         <label className="mb-3 flex flex-col gap-1 text-sm">

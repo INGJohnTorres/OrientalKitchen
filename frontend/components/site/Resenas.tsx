@@ -1,12 +1,12 @@
 "use client";
 
 import { Star, ExternalLink } from "lucide-react";
+import { RESENAS_GOOGLE } from "@/lib/config-restaurante";
 import Reveal from "./Reveal";
 
-// Link público de Google (share.google) a las opiniones del negocio.
-const LINK_RESENAS_GOOGLE = "https://share.google/ENCPpGwpJ75VXWGnf";
-const CALIFICACION_GOOGLE = 4.7;
-const TOTAL_OPINIONES = 86;
+const LINK_RESENAS_GOOGLE = RESENAS_GOOGLE.url;
+const CALIFICACION_GOOGLE = RESENAS_GOOGLE.calificacion;
+const TOTAL_OPINIONES = RESENAS_GOOGLE.totalOpiniones;
 
 // Reseñas reales del negocio en Google, con calificación de 4 estrellas o
 // más (las únicas que se muestran aquí a propósito) — transcritas tal cual
@@ -15,6 +15,11 @@ const TOTAL_OPINIONES = 86;
 // copiarlas). Esta lista es una foto fija: Google no da una API gratis
 // para traerlas en vivo, así que hay que pedir que se vuelva a revisar de
 // vez en cuando para traer las más nuevas.
+//
+// PARA OTRO RESTAURANTE: estas son citas reales de clientes de Oriental
+// Kitchen — no se pueden reutilizar. Hay que reemplazar todo este arreglo
+// por las reseñas de 4+ estrellas del negocio nuevo (y actualizar la URL,
+// calificación y total arriba, en lib/config-restaurante.ts).
 const RESENAS = [
   {
     autor: "Diego López",
