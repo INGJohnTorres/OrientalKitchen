@@ -15,6 +15,10 @@ import {
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+// Llave pública (publishable/anon) de Supabase: está pensada para viajar en el
+// frontend; lo que puede leer lo limita RLS en la base de datos.
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const CLAVE_CATALOGO = "catalogo-restaurante";
 const CLAVE_TOKEN = "admin-token";
 const CLAVE_ROL = "admin-rol";
@@ -165,8 +169,30 @@ function guardarCatalogoLocal(catalogo: Catalogo) {
 
 // ---------- Lectura para el menú del cliente ----------
 
+/**
+ * Lectura pública del menú directo desde Supabase (API REST con la llave
+ * pública, limitada por RLS a solo lectura — ver la migración
+ * `lectura_publica_menu`). El backend en Render (plan gratis) se duerme tras
+ * un rato sin visitas y la primera petición tarda ~20 s; Supabase no, así que
+ * el menú del cliente carga al instante. Si Supabase no está configurado o
+ * falla, se cae al backend como antes.
+ */
+async function lecturaPublicaSupabase<T>(ruta: string): Promise<T | null> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return null;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${ruta}`, {
+      headers: { apikey: SUPABASE_KEY },
+    });
+    return res.ok ? ((await res.json()) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function obtenerCategorias(): Promise<Categoria[]> {
   if (modoBackend()) {
+    const rapido = await lecturaPublicaSupabase<Categoria[]>("categorias?select=*&order=orden.asc");
+    if (rapido) return rapido;
     const res = await fetch(`${API_URL}/categorias`);
     if (!res.ok) throw new Error("No se pudieron cargar las categorías.");
     return res.json();
@@ -176,6 +202,10 @@ export async function obtenerCategorias(): Promise<Categoria[]> {
 
 export async function obtenerProductos(): Promise<Producto[]> {
   if (modoBackend()) {
+    const rapido = await lecturaPublicaSupabase<Producto[]>(
+      "productos?select=*&activo=eq.true&order=creadoEn.asc"
+    );
+    if (rapido) return rapido;
     const res = await fetch(`${API_URL}/productos`);
     if (!res.ok) throw new Error("No se pudieron cargar los productos.");
     return res.json();
@@ -444,6 +474,11 @@ export function obtenerConfiguracion(): Promise<Configuracion> {
 
   cacheConfiguracion = (async () => {
     if (modoBackend()) {
+      // Columnas explícitas: anon no tiene permiso sobre correoNotificacion.
+      const rapido = await lecturaPublicaSupabase<Configuracion[]>(
+        "configuracion?select=id,nombreRestaurante,logoUrl,numeroWhatsapp,plan&limit=1"
+      );
+      if (rapido && rapido[0]) return rapido[0];
       const res = await fetch(`${API_URL}/configuracion`);
       if (!res.ok) throw new Error("No se pudo cargar la configuración del negocio.");
       return res.json();
