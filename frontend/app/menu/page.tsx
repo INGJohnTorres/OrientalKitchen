@@ -29,6 +29,10 @@ function MenuContent() {
   const [categoriaActiva, setCategoriaActiva] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [carritoAbierto, setCarritoAbierto] = useState(false);
+  // El carrito vive en localStorage: el servidor no lo conoce, así que el número
+  // de la bolsa solo se pinta tras montar (evita el error de hidratación).
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
 
   useEffect(() => {
     if (mesaUrl) setMesa(mesaUrl);
@@ -68,7 +72,7 @@ function MenuContent() {
     <div className="min-h-screen bg-cream pb-28 dark:bg-espresso">
       <div className="sticky top-0 z-40">
         <header className="flex items-center justify-between border-b border-espresso/10 bg-cream/95 px-4 py-3 backdrop-blur dark:border-cream/10 dark:bg-espresso/95">
-          <Link href="/" className="grid h-9 w-9 place-items-center rounded-full hover:bg-espresso/10 dark:hover:bg-cream/10">
+          <Link href="/" aria-label="Volver al inicio" className="grid h-11 w-11 place-items-center rounded-full hover:bg-espresso/10 dark:hover:bg-cream/10">
             <ArrowLeft size={18} />
           </Link>
           <div className="flex items-center gap-2 font-display text-sm text-ember">
@@ -81,17 +85,17 @@ function MenuContent() {
             <button
               onClick={() => setCarritoAbierto(true)}
               aria-label="Ver carrito"
-              className="relative grid h-9 w-9 place-items-center rounded-full hover:bg-espresso/10 dark:hover:bg-cream/10"
+              className="relative grid h-11 w-11 place-items-center rounded-full hover:bg-espresso/10 dark:hover:bg-cream/10"
             >
               <ShoppingBag size={18} />
-              {cantidadCarrito > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-ember text-[10px] font-bold text-cream">
+              {montado && cantidadCarrito > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-[20px] place-items-center rounded-full bg-ember px-1 text-[11px] font-bold text-cream">
                   {cantidadCarrito}
                 </span>
               )}
             </button>
           ) : (
-            <span className="h-9 w-9" />
+            <span className="h-11 w-11" />
           )}
         </header>
 

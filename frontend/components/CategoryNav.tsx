@@ -13,7 +13,7 @@ export default function CategoryNav({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div className="-mx-4 border-b border-espresso/10 bg-cream/95 px-4 py-3 backdrop-blur dark:border-cream/10 dark:bg-espresso/95">
+    <div className="border-b border-espresso/10 bg-cream/95 px-4 py-3 backdrop-blur dark:border-cream/10 dark:bg-espresso/95">
       <div className="flex gap-2 overflow-x-auto pb-0.5">
         {categorias.map((c) => (
           <button

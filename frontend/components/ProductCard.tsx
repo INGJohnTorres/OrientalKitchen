@@ -23,11 +23,81 @@ function formatoMoneda(v: number) {
   });
 }
 
+/**
+ * Control único para pedir un plato: "Agregar" y, una vez agregado, el mismo
+ * botón se vuelve un contador − N +. La cantidad vive en el carrito (no hay
+ * un selector aparte), así lo que se ve en la tarjeta es lo que lleva el pedido.
+ */
+function ControlAgregar({
+  nombre,
+  cantidad,
+  onAgregar,
+  onSumar,
+  onRestar,
+  compacto = false,
+}: {
+  nombre: string;
+  cantidad: number;
+  onAgregar: () => void;
+  onSumar: () => void;
+  onRestar: () => void;
+  compacto?: boolean;
+}) {
+  const alto = compacto ? "h-11" : "h-12";
+  const lado = compacto ? "w-11" : "w-12";
+
+  if (cantidad === 0) {
+    return (
+      <button
+        onClick={onAgregar}
+        aria-label={`Agregar ${nombre} al pedido`}
+        className={clsx(
+          "flex items-center justify-center gap-1.5 rounded-full bg-ember text-sm font-bold text-white transition hover:bg-ember-dark active:scale-95",
+          alto,
+          compacto ? "px-4" : "w-full text-[15px]"
+        )}
+      >
+        <Plus size={compacto ? 16 : 18} strokeWidth={2.8} />
+        Agregar
+      </button>
+    );
+  }
+
+  return (
+    <div
+      role="group"
+      aria-label={`Cantidad de ${nombre}`}
+      className={clsx(
+        "flex items-center justify-between overflow-hidden rounded-full border-2 border-ember bg-ember/15",
+        alto,
+        compacto ? "min-w-[116px]" : "w-full"
+      )}
+    >
+      <button
+        onClick={onRestar}
+        aria-label={`Quitar una unidad de ${nombre}`}
+        className={clsx("grid h-full place-items-center text-cream transition active:bg-cream/10", lado)}
+      >
+        <Minus size={18} strokeWidth={2.8} />
+      </button>
+      <span aria-live="polite" className="font-display text-lg tabular-nums text-cream">
+        {cantidad}
+      </span>
+      <button
+        onClick={onSumar}
+        aria-label={`Sumar una unidad de ${nombre}`}
+        className={clsx("grid h-full place-items-center bg-ember text-white transition active:bg-ember-dark", lado)}
+      >
+        <Plus size={18} strokeWidth={2.8} />
+      </button>
+    </div>
+  );
+}
+
 export default function ProductCard({ producto }: { producto: Producto }) {
-  const [cantidad, setCantidad] = useState(1);
   const [varianteId, setVarianteId] = useState(producto.variantes?.[0]?.id ?? null);
   const agregar = useCartStore((s) => s.agregar);
-  const [agregado, setAgregado] = useState(false);
+  const cambiarCantidad = useCartStore((s) => s.cambiarCantidad);
   const plan = usePlan();
   const puedePedir = plan === null || permitePedidos(plan);
 
@@ -38,62 +108,79 @@ export default function ProductCard({ producto }: { producto: Producto }) {
 
   const precioFinal = variante?.precio ?? producto.precio;
   const nombreFinal = variante && variante.nombre !== "Solo" ? `${producto.nombre} — ${variante.nombre}` : producto.nombre;
+  const claveUnica = `${producto.id}::${varianteId ?? "base"}`;
+
+  // Cantidad de la variante elegida (la que muestra el contador) y total del
+  // plato en el carrito, sumando todas sus variantes (para marcar la tarjeta).
+  const cantidad = useCartStore((s) => s.items.find((i) => i.claveUnica === claveUnica)?.cantidad ?? 0);
+  const totalPlato = useCartStore((s) =>
+    s.items.reduce((acc, i) => (i.productoId === producto.id ? acc + i.cantidad : acc), 0)
+  );
+  const enCarrito = totalPlato > 0;
+  // Unidades del mismo plato en otras variantes (para avisar al cambiar de opción).
+  const enOtraOpcion = totalPlato - cantidad;
 
   function handleAgregar() {
-    agregar(
-      {
-        claveUnica: `${producto.id}::${varianteId ?? "base"}`,
-        productoId: producto.id,
-        nombre: nombreFinal,
-        imagen: producto.imagen,
-        precioUnitario: precioFinal,
-      },
-      cantidad
-    );
-    setAgregado(true);
-    setCantidad(1);
-    setTimeout(() => setAgregado(false), 1200);
+    agregar({
+      claveUnica,
+      productoId: producto.id,
+      nombre: nombreFinal,
+      imagen: producto.imagen,
+      precioUnitario: precioFinal,
+    });
   }
+
+  const control = puedePedir && (
+    <ControlAgregar
+      nombre={nombreFinal}
+      cantidad={cantidad}
+      onAgregar={handleAgregar}
+      onSumar={() => cambiarCantidad(claveUnica, cantidad + 1)}
+      onRestar={() => cambiarCantidad(claveUnica, cantidad - 1)}
+    />
+  );
 
   const sinFoto = !producto.imagen;
 
   // Formato lista compacta, igual que la sección "Porciones" de la carta física (sin foto).
   if (sinFoto) {
     return (
-      <div className="flex items-center gap-3 rounded-2xl border border-espresso/8 bg-surface/60 px-4 py-3 dark:border-cream/10 dark:bg-surface/60">
-        <div className="flex-1 min-w-0">
+      <div
+        className={clsx(
+          "flex items-center gap-3 rounded-2xl border bg-surface/60 px-4 py-3",
+          enCarrito ? "border-ember" : "border-espresso/8 dark:border-cream/10"
+        )}
+      >
+        <div className="min-w-0 flex-1">
           <p className="font-medium leading-tight">{producto.nombre}</p>
           <p className="truncate text-xs text-espresso/60 dark:text-cream/60">{producto.descripcion}</p>
+          <p className="mt-0.5 whitespace-nowrap text-sm font-bold text-ember-dark dark:text-ember-claro">
+            {formatoMoneda(producto.precio)}
+          </p>
         </div>
-        <span className="whitespace-nowrap font-mono text-sm font-semibold text-ember-dark dark:text-ember">
-          {formatoMoneda(producto.precio)}
-        </span>
         {puedePedir && (
-          <button
-            onClick={() =>
-              agregar({
-                claveUnica: `${producto.id}::base`,
-                productoId: producto.id,
-                nombre: producto.nombre,
-                precioUnitario: producto.precio,
-              })
-            }
-            aria-label="Agregar"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ember text-cream shadow-md shadow-ember/30 transition hover:bg-ember-dark active:scale-95"
-          >
-            <Plus size={16} />
-          </button>
+          <ControlAgregar
+            compacto
+            nombre={producto.nombre}
+            cantidad={cantidad}
+            onAgregar={handleAgregar}
+            onSumar={() => cambiarCantidad(claveUnica, cantidad + 1)}
+            onRestar={() => cambiarCantidad(claveUnica, cantidad - 1)}
+          />
         )}
       </div>
     );
   }
 
-  // Tarjeta grande estilo "Popular Food": foto amplia arriba, botón circular
-  // naranja flotando sobre la esquina inferior de la imagen (acción rápida
-  // de agregar) y el contenido (nombre, precio, variantes) debajo.
+  // Tarjeta con foto: foto arriba, datos y, al pie, un único control de pedir.
   return (
-    <div className="group flex flex-col overflow-hidden rounded-3xl bg-surface shadow-md shadow-black/20 transition hover:-translate-y-1 hover:shadow-xl">
-      <div className="relative h-36 w-full overflow-hidden sm:h-40">
+    <div
+      className={clsx(
+        "group flex flex-col overflow-hidden rounded-[20px] bg-surface shadow-md shadow-black/20 transition",
+        enCarrito ? "ring-2 ring-ember" : "hover:-translate-y-0.5 hover:shadow-xl"
+      )}
+    >
+      <div className="relative h-[118px] w-full overflow-hidden sm:h-36">
         <Image
           src={producto.imagen!}
           alt={producto.nombre}
@@ -102,33 +189,28 @@ export default function ProductCard({ producto }: { producto: Producto }) {
           quality={90}
           className="object-cover transition duration-500 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-surface/70 via-transparent to-transparent" />
 
         <div className="absolute left-2 top-2 flex flex-wrap gap-1">
           {producto.etiquetas?.map((e) => (
-            <span key={e} className={clsx("rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-wide", colorEtiqueta[e])}>
+            <span key={e} className={clsx("rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wide", colorEtiqueta[e])}>
               {e}
             </span>
           ))}
         </div>
 
-        {puedePedir && (
-          <button
-            onClick={handleAgregar}
-            aria-label="Agregar"
-            className={clsx(
-              "absolute -bottom-4 right-3 grid h-10 w-10 place-items-center rounded-full text-cream shadow-lg shadow-ember/40 ring-4 ring-surface transition active:scale-90",
-              agregado ? "bg-olive" : "bg-ember hover:bg-ember-dark"
-            )}
+        {enCarrito && (
+          <span
+            aria-hidden
+            className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-ember text-white shadow-md"
           >
-            {agregado ? <Check size={18} /> : <Plus size={18} />}
-          </button>
+            <Check size={15} strokeWidth={3} />
+          </span>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1.5 p-4 pt-6">
-        <h3 className="font-display text-base font-semibold leading-tight text-cream">{producto.nombre}</h3>
-        <p className="line-clamp-2 text-xs text-cream/60">
+      <div className="flex flex-1 flex-col gap-1.5 p-3">
+        <h3 className="min-h-[2rem] font-display text-sm font-semibold leading-tight text-cream">{producto.nombre}</h3>
+        <p className="line-clamp-2 text-xs leading-snug text-cream/70">
           {variante?.descripcion || producto.descripcion}
         </p>
 
@@ -138,44 +220,30 @@ export default function ProductCard({ producto }: { producto: Producto }) {
               <button
                 key={v.id}
                 onClick={() => setVarianteId(v.id)}
+                aria-pressed={varianteId === v.id}
                 className={clsx(
-                  "flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition",
+                  "flex min-h-[36px] items-center gap-1 rounded-full border px-3 text-xs font-semibold transition",
                   varianteId === v.id
-                    ? "border-ember bg-ember/15 text-ember"
-                    : "border-cream/15 text-cream/50 hover:border-ember/50"
+                    ? "border-ember bg-ember/15 text-ember-claro"
+                    : "border-cream/20 text-cream/65 hover:border-ember/50"
                 )}
               >
-                {varianteId === v.id && <Check size={11} />}
+                {varianteId === v.id && <Check size={12} />}
                 {v.nombre}
               </button>
             ))}
           </div>
         )}
 
-        <div className="mt-auto flex items-center justify-between pt-2">
-          <span className="whitespace-nowrap font-mono text-sm font-bold text-ember">
-            {formatoMoneda(precioFinal)}
-          </span>
-          {puedePedir && (
-            <div className="flex items-center gap-1.5 rounded-full border border-cream/15 px-1 py-1">
-              <button
-                aria-label="Restar"
-                onClick={() => setCantidad((c) => Math.max(1, c - 1))}
-                className="grid h-6 w-6 place-items-center rounded-full text-cream/70 transition hover:bg-cream/10"
-              >
-                <Minus size={13} />
-              </button>
-              <span className="w-4 text-center font-mono text-xs text-cream">{cantidad}</span>
-              <button
-                aria-label="Sumar"
-                onClick={() => setCantidad((c) => c + 1)}
-                className="grid h-6 w-6 place-items-center rounded-full text-cream/70 transition hover:bg-cream/10"
-              >
-                <Plus size={13} />
-              </button>
-            </div>
-          )}
-        </div>
+        <span className="mt-auto whitespace-nowrap pt-1 text-base font-bold tabular-nums text-ember-claro">
+          {formatoMoneda(precioFinal)}
+        </span>
+        {puedePedir && enOtraOpcion > 0 && (
+          <p className="text-[11px] font-semibold text-mustard-claro">
+            Ya llevas {enOtraOpcion} con otra opción
+          </p>
+        )}
+        {control}
       </div>
     </div>
   );
