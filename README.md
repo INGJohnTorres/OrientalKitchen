@@ -1,42 +1,39 @@
 # 🍽️ Menú QR — Sistema de pedidos para restaurante
 
-Aplicación completa para que los clientes escaneen un código QR en la mesa, vean el menú, armen su pedido y lo envíen directo por WhatsApp (o a la base de datos / panel del restaurante).
+Aplicación para que los clientes escaneen un código QR en la mesa, vean el menú, armen su pedido y lo envíen por WhatsApp, y para que el restaurante gestione pedidos, menú y ventas desde un panel.
 
-Este proyecto tiene dos partes independientes:
+Todo vive en **un solo proyecto Next.js** (`frontend/`): las páginas y también la API (`app/api/*`), que se despliega en Vercel como funciones. La base de datos es Postgres en Supabase.
 
 ```
-restaurant-app/
-├── frontend/   → Next.js 14 + TypeScript + Tailwind (lo que ve el cliente y el admin)
-└── backend/    → Node.js + Express + Prisma + PostgreSQL (API REST)
+frontend/
+├── app/            → páginas (landing, /menu, /favoritos, /admin/*) y la API (app/api/*)
+├── components/     → interfaz
+├── lib/            → api.ts (cliente), server/ (código solo de servidor: Prisma, JWT, correo)
+└── prisma/         → esquema, migraciones y seed de la base de datos
 ```
 
 ---
 
-## 1. Qué incluye esta entrega
+## 1. Qué incluye
 
-**Frontend (funcional de inmediato, sin backend):**
-- Landing con logo, bienvenida y botón "Ver Menú".
-- Menú por categorías, con buscador, etiquetas (Nuevo, Picante, Vegetariano, Promoción) y destacados.
-- Selector de cantidad, carrito flotante tipo "comanda de cocina".
-- Formulario de datos del cliente (nombre, mesa, observaciones, teléfono).
-- Resumen de confirmación antes de enviar.
-- Envío automático del pedido por **WhatsApp** con el mensaje formateado tal como lo pediste.
-- Lectura automática del número de mesa desde la URL: `/menu?mesa=8`.
-- Modo oscuro, diseño responsive, animaciones suaves.
-- Panel de administración (`/admin`) con login y tablero de pedidos: en modo demo vive en localStorage, en producción habla con el backend real solo con definir `NEXT_PUBLIC_API_URL` (sin tocar código, ver sección 4).
-
-**Backend (código completo de referencia, para conectar cuando quieras persistencia real):**
-- API REST con Express + TypeScript.
-- Prisma ORM + esquema PostgreSQL (Productos, Categorías, Pedidos, DetallePedido, Clientes, Usuarios, Configuración).
-- Autenticación JWT para el panel admin.
-- Rutas documentadas para productos, categorías, pedidos y auth.
-- Envío de correo con Nodemailer (opción 3 de envío de pedido).
-
-> Estado actual: ya está desplegado y en producción — frontend en Vercel, backend en Render, base de datos Postgres en Supabase. La cuenta/proyecto en cada plataforma la tiene que crear el dueño del sitio (no algo que se pueda automatizar desde acá), pero una vez creada, Claude Code sí puede correr las migraciones, sembrar el menú y verificar el login en vivo directamente contra la base real.
+- Landing, menú por categorías con buscador, carrito y pedido por **WhatsApp** (mesa por QR, domicilio o recoger en el local).
+- Panel `/admin`: tablero de pedidos, vista de cocina, editor de productos, estadísticas de ventas por rango de fechas, borrado de pedidos.
+- **Planes** (Básico / Medio / Premium) que habilitan o deshabilitan funcionalidades, gestionados por una cuenta `superadmin` en `/admin/superadmin`.
+- Autenticación JWT, contraseñas con `bcrypt`, validación de datos en servidor.
+- Aviso por correo de pedidos nuevos (opcional, con SMTP).
+- Modo demo sin base de datos: si no se define `NEXT_PUBLIC_API_URL`, todo funciona con `localStorage`.
 
 ---
 
-## 2. Instalación local — Frontend
+## 2. Cómo funciona la lectura del menú
+
+- El menú público (categorías, productos activos y configuración no sensible) se lee **directo de Supabase** con la llave pública, para cargar al instante. Lo que esa llave puede leer lo limita RLS en la base (migración `lectura_publica_menu`): no ve pedidos, usuarios ni el correo de notificación.
+- Todo lo demás (login, pedidos, panel, estadísticas) pasa por la API propia `/api/*`.
+- Si Supabase no está configurado o falla, el menú se pide a `/api` como respaldo.
+
+---
+
+## 3. Instalación local
 
 ```bash
 cd frontend
@@ -46,44 +43,24 @@ npm run dev
 
 Abre `http://localhost:3000` — o `http://localhost:3000/menu?mesa=8` para simular el QR de la mesa 8.
 
-Variables de entorno (`frontend/.env.local`):
+Sin variables de entorno corre en **modo demo** (localStorage; usuarios `admin` / `admin123` y `superadmin` / `superadmin123`).
+
+Para usar una base de datos real, crea `frontend/.env.local`:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:4000/api
-NEXT_PUBLIC_WHATSAPP_NUMBER=573115243043   # número del restaurante, sin "+" ni espacios
-NEXT_PUBLIC_RESTAURANT_NAME="Oriental Kitchen"
-```
-
----
-
-## 3. Instalación local — Backend
-
-```bash
-cd backend
-npm install
-cp .env.example .env   # y edita con tus credenciales
-npx prisma migrate dev --name init
-npx prisma db seed
-npm run dev
-```
-
-Variables de entorno (`backend/.env`):
-
-```env
-# Con Supabase: DATABASE_URL es la cadena de "Connection pooling" (puerto
-# 6543, con ?pgbouncer=true) y DIRECT_URL es la de "Direct connection"
-# (puerto 5432) — ambas salen del botón "Connect" del proyecto en Supabase,
-# pestaña ORM → Prisma. Con un Postgres normal (local, Railway, Render),
-# usa la misma cadena en las dos variables.
+# Base de datos. Con Supabase: DATABASE_URL = "Connection pooling" (puerto 6543,
+# con ?pgbouncer=true&connection_limit=1) y DIRECT_URL = "Direct connection" (5432).
+# Con un Postgres normal, usa la misma cadena en ambas.
 DATABASE_URL="postgresql://usuario:password@localhost:5432/restaurante"
 DIRECT_URL="postgresql://usuario:password@localhost:5432/restaurante"
-JWT_SECRET="cambia-esto-por-un-secreto-largo-y-aleatorio"
-PORT=4000
-# Debe incluir el protocolo (https://) y no tener espacios/saltos de línea —
-# el middleware cors() compara este valor tal cual contra el header Origin.
-# Un valor mal escrito aquí rompe el login del panel admin sin dar más pistas
-# que "Failed to fetch" en la consola del navegador.
-CORS_ORIGIN="http://localhost:3000"
+JWT_SECRET="un-secreto-largo-y-aleatorio"
+
+# Activa el modo con base de datos. "/api" = la API del propio proyecto.
+NEXT_PUBLIC_API_URL=/api
+
+# Opcionales
+NEXT_PUBLIC_WHATSAPP_NUMBER=573115243043   # sin "+" ni espacios
+NEXT_PUBLIC_RESTAURANT_NAME="Oriental Kitchen"
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=tu-correo@gmail.com
@@ -91,85 +68,79 @@ SMTP_PASS=tu-contraseña-de-aplicacion
 RESTAURANT_EMAIL=cocina@tu-restaurante.com
 ```
 
-La API queda disponible en `http://localhost:4000/api`. Endpoints principales:
+Luego aplica las migraciones y carga el menú:
 
-| Método | Ruta                       | Descripción                          |
-|--------|----------------------------|---------------------------------------|
-| GET    | /api/categorias            | Lista categorías                      |
-| GET    | /api/productos              | Lista productos (filtra por ?categoria=) |
-| POST   | /api/productos              | Crear producto (admin, JWT)           |
-| PUT    | /api/productos/:id          | Editar producto (admin, JWT)          |
-| DELETE | /api/productos/:id          | Eliminar producto (admin, JWT)        |
-| POST   | /api/pedidos                | Crear pedido (cliente)                |
-| GET    | /api/pedidos                | Listar pedidos (admin, JWT)           |
-| PATCH  | /api/pedidos/:id/estado     | Cambiar estado del pedido (admin, JWT)|
-| POST   | /api/auth/login             | Login admin, devuelve JWT             |
-
----
-
-## 4. Conectar el frontend al backend real
-
-**Ya está hecho — no hay que tocar ningún código.** `frontend/lib/api.ts` detecta automáticamente si `NEXT_PUBLIC_API_URL` está definida:
-
-- **Sin esa variable** → todo funciona en modo demo (localStorage del navegador), como hasta ahora.
-- **Con esa variable** (ej. `NEXT_PUBLIC_API_URL=https://oriental-kitchen-backend.onrender.com/api`) → el menú, el carrito, el login admin, el editor de productos y los pedidos empiezan a hablar con la API real / Postgres automáticamente.
-
-Solo tienes que:
-1. Desplegar `backend/` (ver sección 6).
-2. Agregar `NEXT_PUBLIC_API_URL` en las variables de entorno de tu proyecto en Vercel, apuntando a tu backend desplegado + `/api`.
-3. Redesplegar el frontend (Vercel → Deployments → Redeploy) para que tome la variable nueva.
-
-Después de esto, el usuario/clave del panel admin deja de ser el fijo `admin/admin123` del modo demo — se valida contra la tabla `usuarios` de Postgres (sembrada con `admin/admin123` por el seed, cámbiala apenas entres).
-
----
-
-## 5. Generar el código QR de cada mesa
-
-Cualquier generador de QR (o una librería como `qrcode` en Node) apuntando a:
-
-```
-https://tu-dominio.com/menu?mesa=1
-https://tu-dominio.com/menu?mesa=2
-...
+```bash
+npx prisma migrate deploy
+npx prisma db seed      # 11 categorías, 51 productos, usuarios admin y superadmin
 ```
 
-El número de mesa se guarda automáticamente en el carrito y viaja en el mensaje de WhatsApp y en el pedido.
+El seed es seguro de repetir (usa upsert). Crea `admin` / `admin123` y `superadmin` / `superadmin123`: **cambia las contraseñas apenas entres**.
 
 ---
 
-## 6. Despliegue en producción
+## 4. API (`app/api/*`)
 
-**Frontend → Vercel**
-1. Sube `frontend/` a un repo de GitHub.
-2. Importa el repo en [vercel.com](https://vercel.com).
-3. Configura las variables de entorno del paso 2 en el panel de Vercel.
-4. Deploy.
-
-**Backend → Render**
-1. Sube `backend/` (y el `render.yaml` de la raíz del repo) a GitHub.
-2. En [render.com](https://render.com) → **New → Blueprint**, conecta el repo. Render detecta `render.yaml` automáticamente y crea el servicio `oriental-kitchen-backend` (build: `npm install && npm run build`, start: `npm start`, health check en `/api/salud`).
-3. Rellena las variables marcadas como secretas: `DATABASE_URL`, `DIRECT_URL` (ver sección de Postgres/Supabase abajo), `JWT_SECRET` (cualquier cadena larga aleatoria), `CORS_ORIGIN` (la URL de tu frontend en Vercel **con protocolo**, ej. `https://oriental-kitchen.vercel.app` — sin la `https://` o con espacios/saltos de línea de más, el login del panel admin falla con un simple "Failed to fetch" en consola, sin más pistas) y los `SMTP_*`/`RESTAURANT_EMAIL` si quieres el correo de notificación.
-4. `npm start` ya incluye `prisma migrate deploy` antes de arrancar, así que cada deploy aplica las migraciones pendientes solo.
-5. **Siembra el menú real**: la primera vez, corre `npx prisma db seed` apuntando a tu `DATABASE_URL`/`DIRECT_URL` de producción (puede ser desde tu máquina, sin necesidad del panel de Render). Esto carga las 11 categorías / 51 productos reales de Oriental Kitchen desde `prisma/seed-data.json` — incluidas las fotos, precios y variantes — y crea el usuario admin (`admin`/`admin123`, cámbiala apenas entres). Es seguro correrlo más de una vez (usa upsert, no duplica nada).
-6. Copia la URL pública que te da Render (ej. `https://oriental-kitchen-backend.onrender.com`) — esa + `/api` es tu `NEXT_PUBLIC_API_URL` para el paso anterior.
-
-**PostgreSQL → Supabase**
-1. [supabase.com](https://supabase.com) → **New project**, elige nombre, contraseña de base de datos y región.
-2. En el dashboard del proyecto, botón **Connect** (arriba) → pestaña **ORM** → **Prisma**: ahí te da ya formateadas las dos cadenas que necesitas — `DATABASE_URL` (connection pooling, puerto 6543) y `DIRECT_URL` (conexión directa, puerto 5432). Prisma necesita las dos: la primera para las queries normales de la app, la segunda porque el pooler (pgbouncer) no soporta las sesiones prolongadas que usan las migraciones.
-3. Railway o cualquier otro Postgres gestionado también funciona — en ese caso usa la misma cadena para `DATABASE_URL` y `DIRECT_URL`.
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/salud` | Comprobación de estado |
+| POST | `/api/auth/login` | Login, devuelve JWT |
+| PATCH | `/api/auth/clave` | Cambiar la propia contraseña (JWT) |
+| GET | `/api/categorias` | Lista categorías |
+| GET | `/api/productos` | Productos activos (`?categoria=`) |
+| GET | `/api/productos/todos` | Incluye inactivos (admin, plan Premium) |
+| POST / PUT / DELETE | `/api/productos[/:id]` | Editor de productos (admin, plan Premium) |
+| POST | `/api/pedidos` | Crear pedido (público; no disponible en plan Básico) |
+| GET | `/api/pedidos` | Listar pedidos (admin) |
+| PATCH | `/api/pedidos/:id/estado` | Cambiar estado (admin) |
+| DELETE | `/api/pedidos/:id` | Borrar un pedido (admin) |
+| DELETE | `/api/pedidos` | Borrar todo el historial (admin) |
+| GET | `/api/pedidos/estadisticas` | Ventas por rango de fechas, máx. 31 días (admin, plan Premium) |
+| GET | `/api/configuracion` | Plan y datos del negocio |
+| PATCH | `/api/configuracion` | Cambiar el plan (solo superadmin) |
 
 ---
 
-## 7. Seguridad y buenas prácticas ya incluidas
+## 5. Despliegue en producción
 
-- Contraseñas de admin con hash `bcrypt`.
-- JWT con expiración y verificación en middleware.
-- Validación de payloads en las rutas del backend.
-- CORS configurado explícitamente.
-- Variables sensibles solo en `.env` (nunca en el código).
-- Sanitización básica de inputs del formulario de pedido.
+**Vercel** (frontend + API) y **Supabase** (Postgres). No hay un servidor aparte que se duerma.
+
+1. **Supabase**: crea el proyecto y copia las dos cadenas del botón **Connect → ORM → Prisma** (`DATABASE_URL` con pooler, `DIRECT_URL` directa).
+2. **Base de datos**: desde tu máquina, con esas variables definidas, corre `npx prisma migrate deploy` y `npx prisma db seed` dentro de `frontend/`.
+3. **Vercel**: importa el repo con *Root Directory* `frontend` y define estas variables (Production y Preview, las secretas como *Sensitive*):
+   - `DATABASE_URL` (con `?pgbouncer=true&connection_limit=1`), `DIRECT_URL`, `JWT_SECRET`
+   - `NEXT_PUBLIC_API_URL=/api`
+   - `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_RESTAURANT_NAME`
+   - opcionales: `SMTP_*`, `RESTAURANT_EMAIL`
+4. La lectura pública desde Supabase usa `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` (llave *publishable*, pública por diseño), ya definidas en `frontend/.env.production`.
+5. Cada `git push` a `main` redespliega. Las migraciones **no** se aplican solas: corre `npx prisma migrate deploy` cuando agregues una.
+
+**Notas**
+- Vercel Hobby es para uso no comercial; un negocio real debería evaluar el plan Pro.
+- Si cambias `JWT_SECRET`, las sesiones abiertas del panel se cierran y hay que entrar de nuevo.
+
+---
+
+## 6. Planes
+
+| Plan | Incluye |
+|---|---|
+| **Básico** | Menú digital por QR (sin pedidos) |
+| **Medio** | + Pedidos por WhatsApp (mesa, domicilio y recoger) |
+| **Premium** | + Estadísticas de ventas, editor de productos, soporte prioritario |
+
+Las restricciones se aplican en el frontend (se ocultan botones) **y** en la API (responde 403), así que no basta con llamar la API directamente.
+
+---
+
+## 7. Seguridad
+
+- Contraseñas con `bcrypt`; JWT con expiración de 12 h verificado en cada ruta protegida.
+- Validación con `zod` en servidor (nombre solo letras, teléfono y mesa solo números).
+- RLS en todas las tablas: la llave pública de Supabase solo puede leer lo estrictamente necesario del menú.
+- Secretos solo en variables de entorno, nunca en el código.
 
 ## 8. Siguientes pasos sugeridos
 
-- Subir imágenes de productos a un bucket (S3/Cloudinary) en vez de URLs estáticas.
-- Agregar WebSockets (Socket.io) para que el panel admin reciba pedidos nuevos sin recargar — el backend ya expone un hook (`src/lib/socket.ts`) listo para activar.
+- Subir imágenes de productos a un bucket (Supabase Storage / Cloudinary) en vez de archivos estáticos.
+- Notificaciones en tiempo real en el panel (hoy se refresca por polling cada 4 s).
