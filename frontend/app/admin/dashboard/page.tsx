@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, ChefHat, Lock, RefreshCw, Trash2 } from "lucide-react";
@@ -43,6 +43,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [pedidosNuevos, setPedidosNuevos] = useState(0);
+  const cantidadPrevia = useRef<number | null>(null);
   const [plan, setPlan] = useState<PlanNegocio | null>(null);
   const [refrescando, setRefrescando] = useState(false);
   const [mostrarBorrarTodo, setMostrarBorrarTodo] = useState(false);
@@ -72,12 +73,13 @@ export default function AdminDashboard() {
 
   async function cargar() {
     const data = await obtenerPedidos();
-    setPedidos((prev) => {
-      if (data.length > prev.length) {
-        setPedidosNuevos((n) => n + (data.length - prev.length));
-      }
-      return data;
-    });
+    // La primera carga trae lo que ya existía: no son notificaciones nuevas.
+    const primeraCarga = cantidadPrevia.current === null;
+    if (!primeraCarga && data.length > cantidadPrevia.current!) {
+      setPedidosNuevos((n) => n + (data.length - cantidadPrevia.current!));
+    }
+    cantidadPrevia.current = data.length;
+    setPedidos(data);
   }
 
   async function cambiarEstado(id: string, estado: EstadoPedido) {
@@ -99,6 +101,7 @@ export default function AdminDashboard() {
     try {
       await eliminarTodosPedidos();
       setPedidos([]);
+      cantidadPrevia.current = 0;
       setMostrarBorrarTodo(false);
       setTextoConfirmacion("");
     } catch (err) {
