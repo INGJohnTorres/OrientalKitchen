@@ -32,8 +32,11 @@ export const GET = manejar(async (req: Request) => {
   if (!parsed.success) throw new HttpError(400, { error: parsed.error.flatten() });
   const { desde, hasta } = parsed.data;
 
-  const inicio = new Date(`${desde}T00:00:00`);
-  const fin = new Date(`${hasta}T23:59:59.999`);
+  // Los días se cuentan en hora de Colombia (UTC-5, sin horario de verano).
+  // Sin el desfase, el servidor (UTC) corría el día 5 horas: los pedidos de
+  // la noche (después de las 7 p. m.) caían en el día siguiente.
+  const inicio = new Date(`${desde}T00:00:00-05:00`);
+  const fin = new Date(`${hasta}T23:59:59.999-05:00`);
 
   if (Number.isNaN(inicio.getTime()) || Number.isNaN(fin.getTime()) || inicio > fin) {
     throw new HttpError(400, "Rango de fechas inválido.");

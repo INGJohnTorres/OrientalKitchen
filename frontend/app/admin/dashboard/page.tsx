@@ -15,6 +15,7 @@ import { EstadoPedido, Pedido, PlanNegocio } from "@/lib/types";
 import { permiteEstadisticas, permitePedidos } from "@/lib/plan";
 import AdminShell from "@/components/admin/AdminShell";
 import EstadisticasVentas from "@/components/admin/EstadisticasVentas";
+import ResumenVentas from "@/components/admin/ResumenVentas";
 import TarjetaPedido from "@/components/admin/TarjetaPedido";
 
 // "entregado" se oculta del tablero a propósito: una vez un pedido se
@@ -220,9 +221,13 @@ export default function AdminDashboard() {
         </section>
       )}
 
-      <section id="estadisticas" className="scroll-mt-6">
+      <section id="estadisticas" className="flex scroll-mt-6 flex-col gap-4">
         {puedeVerEstadisticas ? (
-          <EstadisticasVentas />
+          <>
+            <h2 className="text-xl font-bold">Ventas y productos</h2>
+            <ResumenVentas pedidos={pedidos} />
+            <EstadisticasVentas />
+          </>
         ) : (
           <div className="flex items-center gap-3 rounded-[22px] border-2 border-dashed border-cream/15 bg-cocoa/60 p-6 text-base text-cream/60">
             <Lock size={22} />

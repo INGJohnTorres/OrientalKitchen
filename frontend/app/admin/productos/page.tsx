@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import AdminShell from "@/components/admin/AdminShell";
 import Image from "next/image";
 import {
-  ArrowLeft,
   Plus,
   Trash2,
   ChevronDown,
@@ -136,38 +135,37 @@ export default function EditorProductos() {
     setProductos(await obtenerProductosAdmin());
   }
 
-  return (
-    <main className="min-h-screen bg-parchment pb-24 dark:bg-espresso dark:text-cream">
-      <header className="flex items-center justify-between border-b border-espresso/10 bg-white/60 px-6 py-4 dark:border-cream/10 dark:bg-cocoa/40">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/dashboard" className="grid h-9 w-9 place-items-center rounded-full hover:bg-espresso/10 dark:hover:bg-cream/10">
-            <ArrowLeft size={18} />
-          </Link>
-          <h1 className="font-display text-xl font-semibold">Editor de Productos</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {!modoBackend() && (
-            <>
-              <button
-                onClick={descargarExport}
-                className="flex items-center gap-1.5 rounded-full border border-espresso/20 px-3 py-2 text-xs font-medium dark:border-cream/20"
-              >
-                <Download size={14} /> Exportar catálogo
-              </button>
-              <button
-                onClick={restablecer}
-                className="flex items-center gap-1.5 rounded-full border border-espresso/20 px-3 py-2 text-xs font-medium text-ember-dark dark:border-cream/20 dark:text-ember"
-              >
-                <RotateCcw size={14} /> Restablecer
-              </button>
-            </>
-          )}
-        </div>
-      </header>
 
+  const campo =
+    "rounded-xl border border-cream/20 bg-transparent px-3.5 text-base outline-none focus:border-ember";
+
+  const acciones = !modoBackend() ? (
+    <>
+      <button
+        onClick={descargarExport}
+        className="flex h-[52px] items-center gap-2 rounded-2xl border border-cream/20 px-5 text-[15px] font-medium transition active:scale-[0.98]"
+      >
+        <Download size={18} /> Exportar catálogo
+      </button>
+      <button
+        onClick={restablecer}
+        className="flex h-[52px] items-center gap-2 rounded-2xl border border-cream/20 px-5 text-[15px] font-medium text-ember-claro transition active:scale-[0.98]"
+      >
+        <RotateCcw size={18} /> Restablecer
+      </button>
+    </>
+  ) : undefined;
+
+  return (
+    <AdminShell
+      activo="productos"
+      titulo="Editor de productos"
+      subtitulo="Los cambios se guardan al salir de cada campo."
+      acciones={acciones}
+    >
       {modoBackend() ? (
-        <div className="mx-4 mt-4 flex gap-3 rounded-xl border border-olive/40 bg-olive/10 p-4 text-sm">
-          <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-olive" />
+        <div className="flex gap-3 rounded-2xl border border-olive/40 bg-olive/10 p-4 text-[15px] leading-relaxed">
+          <CheckCircle2 size={20} className="mt-0.5 shrink-0 text-olive-claro" />
           <p>
             <strong>Backend conectado:</strong> estos cambios se guardan directo en la base de datos
             real — se ven de inmediato para cualquier cliente que escanee el QR, sin que tengas que
@@ -175,8 +173,8 @@ export default function EditorProductos() {
           </p>
         </div>
       ) : (
-        <div className="mx-4 mt-4 flex gap-3 rounded-xl border border-mustard/40 bg-mustard/10 p-4 text-sm">
-          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-mustard" />
+        <div className="flex gap-3 rounded-2xl border border-mustard/40 bg-mustard/10 p-4 text-[15px] leading-relaxed">
+          <AlertTriangle size={20} className="mt-0.5 shrink-0 text-mustard-claro" />
           <p>
             <strong>Importante:</strong> estos cambios se guardan solo en este navegador. Un cliente que
             escanea el QR desde su celular todavía no los ve — eso requiere conectar el backend. Mientras
@@ -186,33 +184,34 @@ export default function EditorProductos() {
         </div>
       )}
 
-      <div className="mx-4 mt-4 flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         {categorias.map((cat) => {
           const productosCategoria = productos.filter((p) => p.categoriaId === cat.id);
           const abierta = categoriaAbierta === cat.id;
           return (
-            <div key={cat.id} className="overflow-hidden rounded-2xl border border-espresso/10 bg-white/50 dark:border-cream/10 dark:bg-cocoa/30">
+            <div key={cat.id} className="overflow-hidden rounded-[22px] border border-cream/10 bg-cocoa">
               <button
                 onClick={() => setCategoriaAbierta(abierta ? null : cat.id)}
-                className="flex w-full items-center justify-between px-4 py-3"
+                aria-expanded={abierta}
+                className="flex min-h-[64px] w-full items-center justify-between px-5 text-left"
               >
-                <span className="font-display font-semibold">
-                  {cat.nombre} <span className="text-sm font-normal text-espresso/50 dark:text-cream/50">({productosCategoria.length})</span>
+                <span className="font-display text-[17px] uppercase">
+                  {cat.nombre} <span className="font-body text-base font-normal normal-case text-cream/55">({productosCategoria.length})</span>
                 </span>
-                {abierta ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                {abierta ? <ChevronDown size={22} /> : <ChevronRight size={22} />}
               </button>
 
               {abierta && (
-                <div className="flex flex-col gap-3 border-t border-espresso/10 p-4 dark:border-cream/10">
+                <div className="flex flex-col gap-4 border-t border-cream/10 p-4 sm:p-5">
                   {productosCategoria.map((producto) => (
-                    <div key={producto.id} className="rounded-xl border border-espresso/10 bg-white/70 p-4 dark:border-cream/10 dark:bg-cocoa/40">
-                      <div className="flex gap-3">
-                        <label className="relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-dashed border-espresso/25 dark:border-cream/25">
+                    <div key={producto.id} className="rounded-[20px] border border-cream/10 bg-tarjeta p-4 sm:p-5">
+                      <div className="flex flex-wrap gap-4">
+                        <label className="relative h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-cream/25">
                           {producto.imagen ? (
-                            <Image src={producto.imagen} alt={producto.nombre} fill className="object-cover" />
+                            <Image src={producto.imagen} alt={producto.nombre} fill sizes="96px" className="object-cover" />
                           ) : (
-                            <div className="grid h-full w-full place-items-center text-espresso/30 dark:text-cream/30">
-                              <ImagePlus size={20} />
+                            <div className="grid h-full w-full place-items-center text-cream/40">
+                              <ImagePlus size={26} />
                             </div>
                           )}
                           <input
@@ -226,25 +225,28 @@ export default function EditorProductos() {
                           />
                         </label>
 
-                        <div className="flex flex-1 flex-col gap-2">
-                          <div className="flex gap-2">
+                        <div className="flex min-w-[240px] flex-1 flex-col gap-3">
+                          <div className="flex flex-wrap gap-2">
                             <input
                               value={producto.nombre}
                               onChange={(e) => setProductos((prev) => prev.map((p) => (p.id === producto.id ? { ...p, nombre: e.target.value } : p)))}
                               onBlur={() => actualizar(productos.find((p) => p.id === producto.id)!)}
-                              className="flex-1 rounded-lg border border-espresso/20 bg-transparent px-2 py-1.5 font-medium outline-none focus:border-ember dark:border-cream/20"
+                              className={`h-12 min-w-[180px] flex-1 font-semibold ${campo}`}
                               placeholder="Nombre del producto"
+                              aria-label="Nombre del producto"
                             />
-                            <div className="flex items-center gap-1 rounded-lg border border-espresso/20 px-2 dark:border-cream/20">
-                              <span className="text-sm text-espresso/50 dark:text-cream/50">$</span>
+                            <div className="flex h-12 items-center gap-1 rounded-xl border border-cream/20 px-3.5">
+                              <span className="text-base text-cream/55">$</span>
                               <input
                                 type="number"
+                                inputMode="numeric"
                                 value={producto.precio}
                                 onChange={(e) =>
                                   setProductos((prev) => prev.map((p) => (p.id === producto.id ? { ...p, precio: Number(e.target.value) } : p)))
                                 }
                                 onBlur={() => actualizar(productos.find((p) => p.id === producto.id)!)}
-                                className="w-24 bg-transparent py-1.5 text-right font-mono text-sm outline-none"
+                                className="w-28 bg-transparent text-right text-base tabular-nums outline-none"
+                                aria-label="Precio"
                               />
                             </div>
                           </div>
@@ -254,38 +256,30 @@ export default function EditorProductos() {
                             onChange={(e) => setProductos((prev) => prev.map((p) => (p.id === producto.id ? { ...p, descripcion: e.target.value } : p)))}
                             onBlur={() => actualizar(productos.find((p) => p.id === producto.id)!)}
                             rows={2}
-                            className="rounded-lg border border-espresso/20 bg-transparent px-2 py-1.5 text-sm outline-none focus:border-ember dark:border-cream/20"
+                            className={`py-2.5 ${campo}`}
                             placeholder="Descripción"
+                            aria-label="Descripción"
                           />
 
-                          <div className="flex flex-wrap items-center gap-3 text-xs">
-                            <label className="flex items-center gap-1.5">
-                              <input
-                                type="checkbox"
-                                checked={producto.activo}
-                                onChange={(e) => actualizar({ ...producto, activo: e.target.checked })}
-                              />
-                              Activo (visible en el menú)
-                            </label>
-                            <label className="flex items-center gap-1.5">
-                              <input
-                                type="checkbox"
-                                checked={!!producto.destacado}
-                                onChange={(e) => actualizar({ ...producto, destacado: e.target.checked })}
-                              />
-                              Destacado
-                            </label>
-                            <label className="flex items-center gap-1.5">
-                              <input
-                                type="checkbox"
-                                checked={!!producto.masVendido}
-                                onChange={(e) => actualizar({ ...producto, masVendido: e.target.checked })}
-                              />
-                              Más vendido
-                            </label>
+                          <div className="flex flex-wrap gap-x-5 gap-y-1 text-[15px]">
+                            {[
+                              { texto: "Activo (visible en el menú)", valor: producto.activo, campo: "activo" as const },
+                              { texto: "Destacado", valor: !!producto.destacado, campo: "destacado" as const },
+                              { texto: "Más vendido", valor: !!producto.masVendido, campo: "masVendido" as const },
+                            ].map((op) => (
+                              <label key={op.campo} className="flex min-h-[44px] cursor-pointer items-center gap-2.5">
+                                <input
+                                  type="checkbox"
+                                  checked={op.valor}
+                                  onChange={(e) => actualizar({ ...producto, [op.campo]: e.target.checked })}
+                                  className="h-5 w-5 accent-ember"
+                                />
+                                {op.texto}
+                              </label>
+                            ))}
                           </div>
 
-                          <div className="flex flex-wrap gap-1.5">
+                          <div className="flex flex-wrap gap-2">
                             {ETIQUETAS.map((etq) => {
                               const activa = producto.etiquetas?.includes(etq);
                               return (
@@ -297,8 +291,9 @@ export default function EditorProductos() {
                                       : [...(producto.etiquetas || []), etq];
                                     actualizar({ ...producto, etiquetas });
                                   }}
-                                  className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-                                    activa ? "border-ember bg-ember text-cream" : "border-espresso/20 text-espresso/50 dark:border-cream/20 dark:text-cream/50"
+                                  aria-pressed={!!activa}
+                                  className={`h-11 rounded-full border px-4 text-sm font-semibold transition active:scale-95 ${
+                                    activa ? "border-ember bg-ember text-white" : "border-cream/25 text-cream/65"
                                   }`}
                                 >
                                   {etq}
@@ -308,46 +303,57 @@ export default function EditorProductos() {
                           </div>
 
                           {/* Variantes (proteína/adición) */}
-                          <div className="rounded-lg border border-dashed border-espresso/20 p-2 dark:border-cream/20">
-                            <div className="mb-1 flex items-center justify-between">
-                              <span className="text-xs font-semibold text-espresso/60 dark:text-cream/60">Variantes / adiciones</span>
+                          <div className="rounded-2xl border-2 border-dashed border-cream/15 p-3">
+                            <div className="mb-2 flex items-center justify-between">
+                              <span className="text-sm font-semibold text-cream/70">Variantes / adiciones</span>
                               <button
                                 onClick={() => agregarVariante(producto)}
-                                className="flex items-center gap-1 text-xs text-ember-dark dark:text-mustard"
+                                className="flex min-h-[44px] items-center gap-1.5 px-2 text-sm font-semibold text-mustard-claro"
                               >
-                                <Plus size={12} /> Agregar
+                                <Plus size={16} /> Agregar
                               </button>
                             </div>
                             {(producto.variantes || []).length === 0 && (
-                              <p className="text-xs text-espresso/40 dark:text-cream/40">Sin variantes — precio único.</p>
+                              <p className="text-sm text-cream/45">Sin variantes — precio único.</p>
                             )}
                             {(producto.variantes || []).map((v) => (
-                              <div key={v.id} className="mb-1 flex items-center gap-2">
+                              <div key={v.id} className="mb-2 flex items-center gap-2">
                                 <input
                                   value={v.nombre}
                                   onChange={(e) => actualizarVariante(producto, v.id, { nombre: e.target.value })}
-                                  className="flex-1 rounded border border-espresso/15 bg-transparent px-2 py-1 text-xs outline-none dark:border-cream/15"
+                                  className={`h-11 min-w-0 flex-1 text-sm ${campo}`}
+                                  aria-label="Nombre de la variante"
                                 />
                                 <input
                                   type="number"
+                                  inputMode="numeric"
                                   value={v.precio}
                                   onChange={(e) => actualizarVariante(producto, v.id, { precio: Number(e.target.value) })}
-                                  className="w-20 rounded border border-espresso/15 bg-transparent px-2 py-1 text-right font-mono text-xs outline-none dark:border-cream/15"
+                                  className={`h-11 w-24 text-right text-sm tabular-nums ${campo}`}
+                                  aria-label="Precio de la variante"
                                 />
-                                <button onClick={() => eliminarVariante(producto, v.id)} className="text-espresso/40 hover:text-ember">
-                                  <Trash2 size={13} />
+                                <button
+                                  onClick={() => eliminarVariante(producto, v.id)}
+                                  aria-label="Quitar variante"
+                                  className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-cream/50 hover:text-ember-claro"
+                                >
+                                  <Trash2 size={18} />
                                 </button>
                               </div>
                             ))}
                           </div>
                         </div>
 
-                        <div className="flex shrink-0 flex-col items-end justify-between">
-                          <button onClick={() => eliminar(producto)} className="text-espresso/40 hover:text-ember">
-                            <Trash2 size={16} />
+                        <div className="flex shrink-0 flex-col items-end gap-2">
+                          <button
+                            onClick={() => eliminar(producto)}
+                            aria-label={`Eliminar ${producto.nombre}`}
+                            className="grid h-12 w-12 place-items-center rounded-xl border border-cream/15 text-cream/60 transition hover:border-ember hover:text-ember-claro active:scale-95"
+                          >
+                            <Trash2 size={20} />
                           </button>
                           {guardadoId === producto.id && (
-                            <span className="text-[10px] font-medium text-olive">Guardado ✓</span>
+                            <span className="text-xs font-semibold text-olive-claro">Guardado ✓</span>
                           )}
                         </div>
                       </div>
@@ -356,9 +362,9 @@ export default function EditorProductos() {
 
                   <button
                     onClick={() => agregarProducto(cat.id)}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-espresso/25 py-3 text-sm font-medium text-espresso/60 hover:border-ember hover:text-ember dark:border-cream/25 dark:text-cream/60"
+                    className="flex min-h-[56px] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-cream/25 text-base font-semibold text-cream/70 transition hover:border-ember hover:text-ember-claro active:scale-[0.99]"
                   >
-                    <Plus size={16} /> Agregar producto a {cat.nombre}
+                    <Plus size={20} /> Agregar producto a {cat.nombre}
                   </button>
                 </div>
               )}
@@ -366,6 +372,6 @@ export default function EditorProductos() {
           );
         })}
       </div>
-    </main>
+    </AdminShell>
   );
 }
