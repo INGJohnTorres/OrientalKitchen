@@ -20,6 +20,12 @@ const config: Config = {
         mustard: COLORES.mustard,
         olive: COLORES.olive,
         clay: COLORES.clay,
+        // Panel admin (oscuro y táctil): barra lateral y tarjetas.
+        panel: "#17161A",
+        tarjeta: "#1F1E23",
+        "ember-claro": "#FF7A80",
+        "mustard-claro": "#E7BC63",
+        "olive-claro": "#7BD0A5",
       },
       fontFamily: {
         display: ["var(--font-bungee)", "sans-serif"],

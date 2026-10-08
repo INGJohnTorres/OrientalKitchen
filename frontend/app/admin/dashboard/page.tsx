@@ -1,32 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bell, LogOut, DollarSign, ClipboardList, ChefHat, Package, Settings, Lock, ShieldCheck, RefreshCw, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Bell, ChefHat, Lock, RefreshCw, Trash2 } from "lucide-react";
+import clsx from "clsx";
 import {
   actualizarEstadoPedido,
-  cerrarSesion as cerrarSesionApi,
-  obtenerPedidos,
-  obtenerConfiguracion,
-  rolActual,
   eliminarTodosPedidos,
+  obtenerConfiguracion,
+  obtenerPedidos,
 } from "@/lib/api";
-import { emojiParaProducto } from "@/lib/whatsapp";
 import { EstadoPedido, Pedido, PlanNegocio } from "@/lib/types";
-import { etiquetaTipoPedido } from "@/lib/pedido-utils";
-import { permitePedidos, permiteEstadisticas, permiteEditorProductos } from "@/lib/plan";
-import { NOMBRE_RESTAURANTE } from "@/lib/config-restaurante";
+import { permiteEstadisticas, permitePedidos } from "@/lib/plan";
+import AdminShell from "@/components/admin/AdminShell";
 import EstadisticasVentas from "@/components/admin/EstadisticasVentas";
-import clsx from "clsx";
+import TarjetaPedido from "@/components/admin/TarjetaPedido";
 
 // "entregado" se oculta del tablero a propósito: una vez un pedido se
 // entrega, deja de ser accionable aquí — su historial vive en las
 // estadísticas de ventas (sección de abajo), no en este tablero en vivo.
-const columnas: { estado: EstadoPedido; titulo: string }[] = [
-  { estado: "nuevo", titulo: "Nuevos" },
-  { estado: "preparando", titulo: "En preparación" },
-  { estado: "listo", titulo: "Listos" },
+const columnas: { estado: EstadoPedido; titulo: string; color: string }[] = [
+  { estado: "nuevo", titulo: "Nuevos", color: "text-ember-claro" },
+  { estado: "preparando", titulo: "En preparación", color: "text-mustard-claro" },
+  { estado: "listo", titulo: "Listos", color: "text-olive-claro" },
 ];
 
 function formatoMoneda(v: number) {
@@ -35,6 +32,10 @@ function formatoMoneda(v: number) {
     currency: "COP",
     maximumFractionDigits: 0,
   });
+}
+
+function mayuscula(texto: string) {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
 export default function AdminDashboard() {
@@ -47,20 +48,25 @@ export default function AdminDashboard() {
   const [textoConfirmacion, setTextoConfirmacion] = useState("");
   const [borrandoTodo, setBorrandoTodo] = useState(false);
   const [errorBorrado, setErrorBorrado] = useState("");
-  const [esSuperAdmin, setEsSuperAdmin] = useState(false);
+  // Hora actual: se fija después de montar para no desfasar el HTML del servidor.
+  const [ahora, setAhora] = useState<number | null>(null);
 
   useEffect(() => {
     if (sessionStorage.getItem("admin-autenticado") !== "true") {
       router.push("/admin");
       return;
     }
-    setEsSuperAdmin(rolActual() === "superadmin");
     obtenerConfiguracion().then((c) => setPlan(c.plan));
     cargar();
-    // Simula "tiempo real": refresca cada 4s buscando nuevos pedidos en localStorage.
-    // TODO: conectar backend — reemplazar por un socket (ver src/lib/socket.ts del backend).
+    // Simula "tiempo real": refresca cada 4s buscando pedidos nuevos.
     const intervalo = setInterval(cargar, 4000);
-    return () => clearInterval(intervalo);
+    setAhora(Date.now());
+    const reloj = setInterval(() => setAhora(Date.now()), 20000);
+    return () => {
+      clearInterval(intervalo);
+      clearInterval(reloj);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function cargar() {
@@ -81,6 +87,7 @@ export default function AdminDashboard() {
   async function refrescar() {
     setRefrescando(true);
     await cargar();
+    setAhora(Date.now());
     setRefrescando(false);
   }
 
@@ -100,143 +107,155 @@ export default function AdminDashboard() {
     }
   }
 
-  function cerrarSesion() {
-    sessionStorage.removeItem("admin-autenticado");
-    cerrarSesionApi();
-    router.push("/admin");
-  }
-
   const hoy = new Date().toDateString();
   const ventasHoy = pedidos
     .filter((p) => new Date(p.creadoEn).toDateString() === hoy && p.estado !== "cancelado")
     .reduce((acc, p) => acc + p.total, 0);
-  const ventasTotales = pedidos
-    .filter((p) => p.estado !== "cancelado")
-    .reduce((acc, p) => acc + p.total, 0);
-  const pedidosActivos = pedidos.filter((p) =>
-    ["nuevo", "preparando", "listo"].includes(p.estado)
-  ).length;
+  const cuenta = (estado: EstadoPedido) => pedidos.filter((p) => p.estado === estado).length;
 
   const puedePedir = plan === null || permitePedidos(plan);
   const puedeVerEstadisticas = plan === null || permiteEstadisticas(plan);
-  const puedeEditarProductos = plan === null || permiteEditorProductos(plan);
+
+  const contadores = [
+    { label: "Nuevos", valor: String(cuenta("nuevo")) },
+    { label: "En preparación", valor: String(cuenta("preparando")) },
+    { label: "Listos para entregar", valor: String(cuenta("listo")) },
+    { label: "Ventas de hoy", valor: formatoMoneda(ventasHoy), destacado: true },
+  ];
+
+  const subtitulo = (
+    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className="flex items-center gap-1.5 font-semibold text-olive-claro">
+        <span className="h-2.5 w-2.5 rounded-full bg-olive-claro" /> En vivo
+      </span>
+      {ahora !== null && (
+        <span>{mayuscula(new Date(ahora).toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" }))}</span>
+      )}
+    </span>
+  );
+
+  const acciones = (
+    <>
+      {ahora !== null && (
+        <span className="pr-1 font-display text-[22px] tabular-nums">
+          {new Date(ahora).toLocaleTimeString("es-CO", { hour: "numeric", minute: "2-digit" })}
+        </span>
+      )}
+      <button
+        onClick={refrescar}
+        aria-label="Actualizar pedidos"
+        className="grid h-[52px] w-[52px] place-items-center rounded-2xl border border-cream/15 bg-tarjeta transition active:scale-95"
+      >
+        <RefreshCw size={22} className={refrescando ? "animate-spin" : ""} />
+      </button>
+      <button
+        onClick={() => setPedidosNuevos(0)}
+        aria-label={`Notificaciones, ${pedidosNuevos} nuevas`}
+        className="relative grid h-[52px] w-[52px] place-items-center rounded-2xl border border-cream/15 bg-tarjeta transition active:scale-95"
+      >
+        <Bell size={22} />
+        {pedidosNuevos > 0 && (
+          <span className="absolute -right-1.5 -top-1.5 grid h-[22px] min-w-[22px] place-items-center rounded-full bg-ember px-1 text-xs font-bold text-white">
+            {pedidosNuevos}
+          </span>
+        )}
+      </button>
+      {puedePedir && (
+        <Link
+          href="/admin/cocina"
+          className="flex h-[52px] items-center gap-2.5 rounded-2xl bg-mustard px-6 text-base font-bold text-espresso transition active:scale-[0.98]"
+        >
+          <ChefHat size={21} /> Vista de cocina
+        </Link>
+      )}
+    </>
+  );
 
   return (
-    <main className="min-h-screen bg-parchment dark:bg-espresso dark:text-cream">
-      <header className="flex items-center justify-between border-b border-espresso/10 bg-white/60 px-6 py-4 dark:border-cream/10 dark:bg-cocoa/40">
-        <h1 className="font-display text-xl font-semibold">Panel — {NOMBRE_RESTAURANTE}</h1>
-        <div className="flex items-center gap-4">
-          {puedeEditarProductos && (
-            <Link
-              href="/admin/productos"
-              className="flex items-center gap-1.5 rounded-full border border-espresso/20 px-4 py-2 text-sm font-medium transition hover:border-ember hover:text-ember dark:border-cream/20"
-            >
-              <Package size={16} /> Editar productos
-            </Link>
-          )}
-          <Link
-            href="/admin/configuracion"
-            className="grid h-9 w-9 place-items-center rounded-full border border-espresso/20 transition hover:border-ember hover:text-ember dark:border-cream/20"
-            aria-label="Configuración"
-          >
-            <Settings size={16} />
-          </Link>
-          {esSuperAdmin && (
-            <Link
-              href="/admin/superadmin"
-              className="grid h-9 w-9 place-items-center rounded-full border border-espresso/20 transition hover:border-ember hover:text-ember dark:border-cream/20"
-              aria-label="Panel de superadministrador"
-            >
-              <ShieldCheck size={16} />
-            </Link>
-          )}
-          {puedePedir && (
-            <Link
-              href="/admin/cocina"
-              className="flex items-center gap-1.5 rounded-full bg-ember px-4 py-2 text-sm font-medium text-cream transition hover:bg-ember-dark"
-            >
-              <ChefHat size={16} /> Vista de cocina
-            </Link>
-          )}
-          <button
-            onClick={() => setPedidosNuevos(0)}
-            className="relative grid h-10 w-10 place-items-center rounded-full hover:bg-espresso/10 dark:hover:bg-cream/10"
-          >
-            <Bell size={18} />
-            {pedidosNuevos > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-ember text-[10px] font-bold text-cream">
-                {pedidosNuevos}
-              </span>
-            )}
-          </button>
-          <button onClick={cerrarSesion} className="flex items-center gap-1.5 text-sm text-espresso/60 hover:text-ember dark:text-cream/60">
-            <LogOut size={15} /> Salir
-          </button>
-        </div>
-      </header>
+    <AdminShell activo="pedidos" titulo="Pedidos en vivo" subtitulo={subtitulo} acciones={acciones}>
+      <section className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3.5">
+        {contadores.map((c) => (
+          <div key={c.label} className="flex flex-col gap-1 rounded-[20px] border border-cream/10 bg-cocoa px-[22px] py-[18px]">
+            <span className="text-[15px] font-medium text-cream/65">{c.label}</span>
+            <span className={clsx("font-display text-[30px] leading-tight tabular-nums", c.destacado && "text-mustard-claro")}>
+              {c.valor}
+            </span>
+          </div>
+        ))}
+      </section>
 
-      <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-3">
-        <div className="flex items-center gap-3 rounded-2xl border border-espresso/10 bg-white/60 p-4 dark:border-cream/10 dark:bg-cocoa/40">
-          <div className="grid h-10 w-10 place-items-center rounded-full bg-olive/20 text-olive">
-            <DollarSign size={18} />
-          </div>
-          <div>
-            <p className="text-xs text-espresso/50 dark:text-cream/50">Ventas de hoy</p>
-            <p className="font-mono text-lg font-semibold">{formatoMoneda(ventasHoy)}</p>
-          </div>
+      {!puedePedir ? (
+        <div className="flex items-center gap-3 rounded-[22px] border-2 border-dashed border-cream/15 bg-cocoa/60 p-6 text-base text-cream/60">
+          <Lock size={22} />
+          Los pedidos en línea están disponibles desde el plan Medio.
         </div>
-        <div className="flex items-center gap-3 rounded-2xl border border-espresso/10 bg-white/60 p-4 dark:border-cream/10 dark:bg-cocoa/40">
-          <div className="grid h-10 w-10 place-items-center rounded-full bg-mustard/20 text-ember-dark">
-            <DollarSign size={18} />
-          </div>
-          <div>
-            <p className="text-xs text-espresso/50 dark:text-cream/50">Ventas totales</p>
-            <p className="font-mono text-lg font-semibold">{formatoMoneda(ventasTotales)}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-2xl border border-espresso/10 bg-white/60 p-4 dark:border-cream/10 dark:bg-cocoa/40">
-          <div className="grid h-10 w-10 place-items-center rounded-full bg-ember/20 text-ember">
-            <ClipboardList size={18} />
-          </div>
-          <div className="flex-1">
-            <p className="text-xs text-espresso/50 dark:text-cream/50">Pedidos activos</p>
-            <p className="font-mono text-lg font-semibold">{pedidosActivos}</p>
-          </div>
-          <button
-            onClick={refrescar}
-            aria-label="Refrescar pedidos"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-espresso/50 transition hover:bg-espresso/10 dark:text-cream/50 dark:hover:bg-cream/10"
-          >
-            <RefreshCw size={15} className={refrescando ? "animate-spin" : ""} />
-          </button>
-        </div>
-      </div>
+      ) : (
+        <section className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start gap-[18px]">
+          {columnas.map((col) => {
+            const lista = pedidos.filter((p) => p.estado === col.estado);
+            return (
+              <div key={col.estado} className="flex flex-col gap-3.5 rounded-[26px] border border-cream/[0.07] bg-panel p-4">
+                <div className="flex items-center justify-between px-1.5">
+                  <h2 className={clsx("font-display text-[17px] uppercase", col.color)}>{col.titulo}</h2>
+                  <span className="grid h-9 min-w-[36px] place-items-center rounded-full bg-cream/10 px-1.5 text-base font-bold">
+                    {lista.length}
+                  </span>
+                </div>
+                {lista.map((p) => (
+                  <TarjetaPedido
+                    key={p.id}
+                    pedido={p}
+                    minutos={ahora === null ? 0 : Math.max(0, Math.floor((ahora - new Date(p.creadoEn).getTime()) / 60000))}
+                    onCambiarEstado={cambiarEstado}
+                  />
+                ))}
+                {lista.length === 0 && (
+                  <p className="rounded-[20px] border-2 border-dashed border-cream/15 p-6 text-center text-base text-cream/40">
+                    Sin pedidos
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </section>
+      )}
 
-      <div className="px-6 pb-4">
+      <section id="estadisticas" className="scroll-mt-6">
+        {puedeVerEstadisticas ? (
+          <EstadisticasVentas />
+        ) : (
+          <div className="flex items-center gap-3 rounded-[22px] border-2 border-dashed border-cream/15 bg-cocoa/60 p-6 text-base text-cream/60">
+            <Lock size={22} />
+            El dashboard de estadísticas de ventas está disponible en el plan Premium.
+          </div>
+        )}
+      </section>
+
+      <section>
         {!mostrarBorrarTodo ? (
           <button
             onClick={() => setMostrarBorrarTodo(true)}
-            className="flex items-center gap-1.5 text-xs text-espresso/40 hover:text-ember dark:text-cream/40"
+            className="flex min-h-[48px] items-center gap-2 text-sm text-cream/45 hover:text-ember-claro"
           >
-            <Trash2 size={13} /> Borrar todo el historial de pedidos
+            <Trash2 size={16} /> Borrar todo el historial de pedidos
           </button>
         ) : (
-          <div className="flex flex-col gap-2 rounded-xl border border-dashed border-ember/40 bg-ember/5 p-4 text-sm">
-            <p className="text-ember">
-              Esto borra <strong>todos</strong> los pedidos (activos e historial de ventas) de forma
-              permanente. Escribe <strong>BORRAR</strong> para confirmar.
+          <div className="flex flex-col gap-3 rounded-[22px] border-2 border-dashed border-ember/45 bg-ember/10 p-5">
+            <p className="text-base text-ember-claro">
+              Esto borra <strong>todos</strong> los pedidos (activos e historial de ventas) de forma permanente. Escribe{" "}
+              <strong>BORRAR</strong> para confirmar.
             </p>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-3">
               <input
                 value={textoConfirmacion}
                 onChange={(e) => setTextoConfirmacion(e.target.value)}
                 placeholder="BORRAR"
-                className="rounded-lg border border-ember/30 bg-transparent px-3 py-1.5 text-sm outline-none focus:border-ember"
+                className="h-12 rounded-xl border border-ember/40 bg-transparent px-4 text-base outline-none focus:border-ember"
               />
               <button
                 onClick={borrarTodoElHistorial}
                 disabled={textoConfirmacion.trim().toUpperCase() !== "BORRAR" || borrandoTodo}
-                className="rounded-full bg-ember px-4 py-1.5 text-xs font-semibold text-cream transition hover:bg-ember-dark disabled:cursor-not-allowed disabled:opacity-40"
+                className="h-12 rounded-xl bg-ember px-6 text-base font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Confirmar borrado
               </button>
@@ -246,89 +265,15 @@ export default function AdminDashboard() {
                   setTextoConfirmacion("");
                   setErrorBorrado("");
                 }}
-                className="rounded-full border border-espresso/20 px-4 py-1.5 text-xs font-medium text-espresso/60 dark:border-cream/20 dark:text-cream/60"
+                className="h-12 rounded-xl border-2 border-cream/20 px-5 text-base font-medium text-cream/75"
               >
                 Cancelar
               </button>
             </div>
-            {errorBorrado && <p className="text-xs text-ember">{errorBorrado}</p>}
+            {errorBorrado && <p className="text-sm text-ember-claro">{errorBorrado}</p>}
           </div>
         )}
-      </div>
-
-      <div className="px-6 pb-8">
-        {puedeVerEstadisticas ? (
-          <EstadisticasVentas />
-        ) : (
-          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-espresso/15 bg-white/40 p-5 text-sm text-espresso/50 dark:border-cream/15 dark:bg-cocoa/30 dark:text-cream/50">
-            <Lock size={18} />
-            El dashboard de estadísticas de ventas está disponible en el plan Premium.
-          </div>
-        )}
-      </div>
-
-      {!puedePedir ? (
-        <div className="mx-6 mb-8 flex items-center gap-3 rounded-2xl border border-dashed border-espresso/15 bg-white/40 p-5 text-sm text-espresso/50 dark:border-cream/15 dark:bg-cocoa/30 dark:text-cream/50">
-          <Lock size={18} />
-          Los pedidos en línea están disponibles desde el plan Medio.
-        </div>
-      ) : (
-      <div className="grid grid-cols-1 gap-4 px-6 pb-8 lg:grid-cols-3">
-        {columnas.map((col) => (
-          <div key={col.estado} className="flex flex-col gap-3">
-            <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-espresso/60 dark:text-cream/60">
-              {col.titulo} ({pedidos.filter((p) => p.estado === col.estado).length})
-            </h2>
-            <div className="flex flex-col gap-3">
-              {pedidos
-                .filter((p) => p.estado === col.estado)
-                .map((p) => (
-                  <div
-                    key={p.id}
-                    className="rounded-xl border border-espresso/10 bg-white/70 p-4 text-sm shadow-sm dark:border-cream/10 dark:bg-cocoa/50"
-                  >
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="font-mono font-semibold">#{p.numero}</span>
-                      <span className="text-xs text-espresso/50 dark:text-cream/50">
-                        {new Date(p.creadoEn).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </div>
-                    <p>{etiquetaTipoPedido(p)} — {p.cliente}</p>
-                    <ul className="my-2 list-disc pl-4 text-espresso/70 dark:text-cream/70">
-                      {p.items.map((i) => (
-                        <li key={i.claveUnica}>{emojiParaProducto(i.nombre)} {i.cantidad} {i.nombre}</li>
-                      ))}
-                    </ul>
-                    {p.observaciones && (
-                      <p className="mb-2 text-xs italic text-espresso/50 dark:text-cream/50">"{p.observaciones}"</p>
-                    )}
-                    <p className="mb-3 font-mono font-semibold">{formatoMoneda(p.total)}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {col.estado === "nuevo" && (
-                        <button onClick={() => cambiarEstado(p.id, "preparando")} className="rounded-full bg-ember px-3 py-1 text-xs font-medium text-cream">Aceptar</button>
-                      )}
-                      {col.estado === "preparando" && (
-                        <button onClick={() => cambiarEstado(p.id, "listo")} className="rounded-full bg-mustard px-3 py-1 text-xs font-medium text-espresso">Marcar listo</button>
-                      )}
-                      {col.estado === "listo" && (
-                        <button onClick={() => cambiarEstado(p.id, "entregado")} className="rounded-full bg-olive px-3 py-1 text-xs font-medium text-cream">Entregado</button>
-                      )}
-                      {col.estado !== "entregado" && (
-                        <button onClick={() => cambiarEstado(p.id, "cancelado")} className="rounded-full border border-espresso/20 px-3 py-1 text-xs font-medium text-espresso/60 dark:border-cream/20 dark:text-cream/60">Cancelar</button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              {pedidos.filter((p) => p.estado === col.estado).length === 0 && (
-                <p className={clsx("rounded-xl border border-dashed border-espresso/15 p-4 text-center text-xs text-espresso/40 dark:border-cream/15 dark:text-cream/40")}>
-                  Sin pedidos
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-      )}
-    </main>
+      </section>
+    </AdminShell>
   );
 }
