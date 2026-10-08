@@ -151,15 +151,15 @@ export default function SuperAdminPage() {
       <section className="overflow-hidden rounded-[24px] border border-cream/10 bg-cocoa">
         <h2 className="px-6 pb-3 pt-5 text-lg font-bold">Qué incluye cada plan</h2>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-[15px]">
+          <table className="w-full text-sm sm:text-[15px]">
             <thead>
               <tr className="border-y border-cream/10 text-left text-cream/60">
-                <th className="px-6 py-3.5 font-semibold">Funcionalidad</th>
+                <th className="px-4 py-3.5 sm:px-6 font-semibold">Funcionalidad</th>
                 {PLANES.map((p) => (
                   <th
                     key={p.id}
                     className={clsx(
-                      "px-4 py-3.5 text-center font-semibold",
+                      "px-1.5 py-3.5 text-center font-semibold sm:px-4",
                       p.id === "premium" && "bg-mustard/10 text-mustard-claro"
                     )}
                   >
@@ -171,11 +171,11 @@ export default function SuperAdminPage() {
             <tbody>
               {FUNCIONES.map((f) => (
                 <tr key={f.nombre} className="border-b border-cream/[0.07] last:border-0">
-                  <td className="px-6 py-4">{f.nombre}</td>
+                  <td className="px-4 py-4 sm:px-6">{f.nombre}</td>
                   {PLANES.map((p) => {
                     const si = incluye(p.id, f.desde);
                     return (
-                      <td key={p.id} className={clsx("px-4 py-4 text-center", p.id === "premium" && "bg-mustard/10")}>
+                      <td key={p.id} className={clsx("px-1.5 py-4 text-center sm:px-4", p.id === "premium" && "bg-mustard/10")}>
                         {si ? (
                           <Check size={20} className="mx-auto text-olive-claro" aria-label="Incluido" />
                         ) : (

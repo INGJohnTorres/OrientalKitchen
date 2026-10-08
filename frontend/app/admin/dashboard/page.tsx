@@ -177,15 +177,20 @@ export default function AdminDashboard() {
 
   return (
     <AdminShell activo="pedidos" titulo="Pedidos en vivo" subtitulo={subtitulo} acciones={acciones}>
-      <section className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3.5">
+      {/* En el celular van 2×2 para que los pedidos queden a la vista sin tanto scroll. */}
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] sm:gap-3.5">
         {contadores.map((c) => (
-          <div key={c.label} className="flex flex-col gap-1 rounded-[20px] border border-cream/10 bg-cocoa px-[22px] py-[18px]">
-            <span className="text-[15px] font-medium text-cream/65">{c.label}</span>
+          <div key={c.label} className="flex flex-col gap-1 rounded-[20px] border border-cream/10 bg-cocoa px-4 py-3.5 sm:px-[22px] sm:py-[18px]">
+            <span className="text-sm font-medium leading-snug text-cream/65 sm:text-[15px]">{c.label}</span>
             <span
               className={clsx(
                 "whitespace-nowrap font-display leading-tight tabular-nums",
                 // Cifras de millones (ej. $ 3.399.600) no caben a 30 px en la tarjeta.
-                c.valor.length > 10 ? "text-[20px]" : c.valor.length > 8 ? "text-[24px]" : "text-[30px]",
+                c.valor.length > 10
+                  ? "text-[17px] sm:text-[20px]"
+                  : c.valor.length > 8
+                    ? "text-[19px] sm:text-[24px]"
+                    : "text-[24px] sm:text-[30px]",
                 c.destacado && "text-mustard-claro"
               )}
             >

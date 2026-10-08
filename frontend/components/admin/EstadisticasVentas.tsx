@@ -184,7 +184,7 @@ export default function EstadisticasVentas() {
                                 onClick={() => borrarPedido(p.id)}
                                 disabled={borrandoId === p.id}
                                 aria-label={`Confirmar borrar pedido #${p.numero}`}
-                                className="grid h-8 w-8 place-items-center rounded-full bg-ember text-white disabled:opacity-40"
+                                className="relative grid h-8 w-8 place-items-center after:absolute after:-inset-1.5 after:content-[''] rounded-full bg-ember text-white disabled:opacity-40"
                               >
                                 <Check size={15} />
                               </button>
@@ -192,7 +192,7 @@ export default function EstadisticasVentas() {
                                 type="button"
                                 onClick={() => setConfirmandoId(null)}
                                 aria-label="Cancelar"
-                                className="grid h-8 w-8 place-items-center rounded-full text-cream/65 hover:bg-cream/10"
+                                className="relative grid h-8 w-8 place-items-center after:absolute after:-inset-1.5 after:content-[''] rounded-full text-cream/65 hover:bg-cream/10"
                               >
                                 <X size={15} />
                               </button>
@@ -203,7 +203,7 @@ export default function EstadisticasVentas() {
                               onClick={() => setConfirmandoId(p.id)}
                               aria-label={`Borrar pedido #${p.numero}`}
                               className={clsx(
-                                "grid h-8 w-8 place-items-center rounded-full text-cream/50",
+                                "relative grid h-8 w-8 place-items-center rounded-full text-cream/50 after:absolute after:-inset-1.5 after:content-['']",
                                 "hover:bg-ember/25 hover:text-ember-claro"
                               )}
                             >
@@ -227,20 +227,20 @@ export default function EstadisticasVentas() {
               <p className="text-sm text-cream/40">Sin ventas en este rango.</p>
             ) : (
               <div className="overflow-x-auto rounded-2xl border border-cream/10">
-                <table className="w-full min-w-[420px] text-left text-base">
-                  <thead className="bg-cream/5 text-sm uppercase tracking-wide text-cream/55">
+                <table className="w-full text-left text-[15px] sm:text-base">
+                  <thead className="bg-cream/5 text-xs uppercase sm:text-sm tracking-wide text-cream/55">
                     <tr>
-                      <th className="px-4 py-3 font-medium">Producto</th>
-                      <th className="px-4 py-3 font-medium">Cantidad</th>
-                      <th className="px-4 py-3 font-medium">Total</th>
+                      <th className="px-3 py-3 sm:px-4 font-medium">Producto</th>
+                      <th className="px-3 py-3 sm:px-4 font-medium">Cantidad</th>
+                      <th className="px-3 py-3 sm:px-4 font-medium">Total</th>
                     </tr>
                   </thead>
                   <tbody>
                     {datos.productos.map((p) => (
                       <tr key={p.nombre} className="border-t border-cream/10">
-                        <td className="px-4 py-3.5">{p.nombre}</td>
-                        <td className="px-4 py-3.5 tabular-nums">{p.cantidad}</td>
-                        <td className="px-4 py-3.5 tabular-nums">{formatoMoneda(p.total)}</td>
+                        <td className="px-3 py-3.5 sm:px-4">{p.nombre}</td>
+                        <td className="px-3 py-3.5 sm:px-4 tabular-nums">{p.cantidad}</td>
+                        <td className="px-3 py-3.5 sm:px-4 tabular-nums">{formatoMoneda(p.total)}</td>
                       </tr>
                     ))}
                   </tbody>

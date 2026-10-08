@@ -235,7 +235,8 @@ export default function EditorProductos() {
                               placeholder="Nombre del producto"
                               aria-label="Nombre del producto"
                             />
-                            <div className="flex h-12 items-center gap-1 rounded-xl border border-cream/20 px-3.5">
+                            {/* label: tocar cualquier parte de la caja enfoca el número (el input solo mide 24 px). */}
+                            <label className="flex h-12 cursor-text items-center gap-1 rounded-xl border border-cream/20 px-3.5">
                               <span className="text-base text-cream/55">$</span>
                               <input
                                 type="number"
@@ -248,7 +249,7 @@ export default function EditorProductos() {
                                 className="w-28 bg-transparent text-right text-base tabular-nums outline-none"
                                 aria-label="Precio"
                               />
-                            </div>
+                            </label>
                           </div>
 
                           <textarea
