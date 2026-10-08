@@ -42,9 +42,13 @@ export default function AdminShell({
 
   useEffect(() => {
     setEsSuperAdmin(rolActual() === "superadmin");
-    obtenerConfiguracion()
-      .then((c) => setPlan(c.plan))
-      .catch(() => setPlan("premium"));
+    const cargarPlan = () =>
+      obtenerConfiguracion()
+        .then((c) => setPlan(c.plan))
+        .catch(() => setPlan("premium"));
+    cargarPlan();
+    window.addEventListener("configuracion-actualizada", cargarPlan);
+    return () => window.removeEventListener("configuracion-actualizada", cargarPlan);
   }, []);
 
   function cerrarSesion() {

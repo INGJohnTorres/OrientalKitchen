@@ -467,6 +467,8 @@ let cacheConfiguracion: Promise<Configuracion> | null = null;
 
 export function refrescarCacheConfiguracion(): void {
   cacheConfiguracion = null;
+  // Avisa al menú lateral del panel para que relea el plan sin recargar la página.
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("configuracion-actualizada"));
 }
 
 export function obtenerConfiguracion(): Promise<Configuracion> {
