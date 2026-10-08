@@ -181,7 +181,14 @@ export default function AdminDashboard() {
         {contadores.map((c) => (
           <div key={c.label} className="flex flex-col gap-1 rounded-[20px] border border-cream/10 bg-cocoa px-[22px] py-[18px]">
             <span className="text-[15px] font-medium text-cream/65">{c.label}</span>
-            <span className={clsx("font-display text-[30px] leading-tight tabular-nums", c.destacado && "text-mustard-claro")}>
+            <span
+              className={clsx(
+                "whitespace-nowrap font-display leading-tight tabular-nums",
+                // Cifras de millones (ej. $ 3.399.600) no caben a 30 px en la tarjeta.
+                c.valor.length > 10 ? "text-[20px]" : c.valor.length > 8 ? "text-[24px]" : "text-[30px]",
+                c.destacado && "text-mustard-claro"
+              )}
+            >
               {c.valor}
             </span>
           </div>
